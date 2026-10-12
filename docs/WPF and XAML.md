@@ -19,8 +19,11 @@
 - `DockPanel`: stick things to an edge, the rest fills the middle.
 - `StackPanel` / `WrapPanel`: line things up; wrap to the next line when full.
 
-## Styles: `Resources/Theme.xaml`
-All colours and control styles live in one file, merged into the app in `App.xaml`. Change a colour there and every screen updates.
+## Styles: `Resources/Controls.xaml` and `Resources/Themes/`
+Control shapes live in `Controls.xaml`; colours live in `Themes/Dark.xaml` and `Light.xaml`. Both are merged into the app in `App.xaml`. See [[Themes]].
+
+## Custom controls
+`Controls/InspectionOverlay.cs` is a control written in C# instead of XAML. It draws boxes and guide lines itself in `OnRender`. See [[Inspection]].
 
 ## Converters: `Converters/Converters.cs`
 Turn a value into something displayable. `EnumToTextConverter` turns `NearMint` into "Near mint".

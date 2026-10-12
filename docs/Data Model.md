@@ -23,7 +23,7 @@ CardSet ──< CardReference ──< PhysicalCard ──< CardImage
 | `GradingSubmission` | A batch sent to PSA/CGC/BGS and what came back. |
 | `AuditEntry` | Log of every create/update/delete. |
 
-Most of these tables exist already but have no screens yet. They are ready for later milestones.
+Most tables now have a screen: assessments in [[Inspection]] and [[Grading Assessment]], prices and rates in [[Valuation]], submissions in [[Submissions and Reports]]. Transactions (buying/selling) still have no screen.
 
 ## Shared building blocks
 - **`Entity`** (`Common/Entity.cs`): every class inherits an `Id`, a GUID made in code with `Guid.CreateVersion7()`. Because the Id exists before saving, records can be linked and exported safely. Version 7 GUIDs sort by time, which keeps indexes tidy.

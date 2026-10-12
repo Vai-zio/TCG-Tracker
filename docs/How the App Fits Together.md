@@ -25,4 +25,18 @@ Clicking **Save** in the card editor:
 4. Just before the save, [[Interceptors]] stamp the time and write an audit entry.
 5. EF Core turns it into SQL `INSERT`s in the SQLite file.
 
+## Every feature follows the same shape
+| Feature | Screen (App) | Interface (Core) | Implementation (Infrastructure) | Pure rules (Core) |
+|---|---|---|---|---|
+| Collection | `CollectionViewModel` | `ICollectionService` | `CollectionService` | `PhysicalCardInputValidator` |
+| [[Inspection]] | `InspectionViewModel` | `IInspectionService` | `InspectionService` | `ImageQualityRules`, `CenteringCalculator` |
+| [[Card Identification]] | `IdentifyViewModel` | `IIdentificationService` | `IdentificationService` | `CardTextParser`, `CandidateRanker` |
+| [[Grading Assessment]] | `InspectionViewModel` | `IAssessmentService` | `AssessmentService` | `AssessmentEngine` |
+| [[Valuation]] | `MarketViewModel` | `IMarketService` | `MarketService` | `PriceStatistics`, `ExchangeRateTable` |
+| [[Grading Profit]] | `GradingProfitViewModel` | none needed | none needed | `GradingProfitCalculator` |
+| [[Submissions and Reports]] | `SubmissionsViewModel`, `ReportsViewModel` | `ISubmissionService`, `IReportService` | `SubmissionService`, `ReportService` | `SubmissionWorkflow`, `PredictionComparison` |
+| [[Backups and Restore]] | `BackupViewModel` | `IBackupService` | `BackupService` | none |
+
+The "pure rules" column is the important pattern: the clever logic is plain C# in Core, with no database or screen. That makes it easy to read and to test with simple numbers ([[Tests]]).
+
 Next: [[Code Map]]

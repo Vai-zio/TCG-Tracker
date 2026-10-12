@@ -23,4 +23,6 @@ A 20-megapixel photo is decoded directly to 64 pixels wide, so the list doesn't 
 `IsAsync` tells WPF to fetch the value on a background thread, so scrolling never freezes while pictures load.
 
 ## Originals vs derivatives
-`CardImage.OriginalImageId` is empty for an original photo. Later, crops and annotated versions will point back at their original, and the original can't be deleted while they exist.
+`CardImage.OriginalImageId` is empty for an original photo. A **derived** image points back at its original, e.g. the straightened crop made by [[Card Identification]]. The original can't be deleted while derived images exist.
+
+Import also records each photo's quality numbers, used by [[Inspection]].

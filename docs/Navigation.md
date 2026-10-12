@@ -19,7 +19,14 @@ We never create a View directly. We set the **current ViewModel**, and WPF finds
 - `INavigationAware`: a page that loads its data when it's shown (`OnNavigatedToAsync`). The editor uses the parameter to know which card to open.
 - `IHasUnsavedChanges`: before leaving such a page, the user is asked "Discard changes?". The same check runs when closing the window.
 
+## Passing data to a page
+The parameter can be anything. The top-bar search (Ctrl+K) does:
+```csharp
+navigation.NavigateToAsync<CollectionViewModel>(new CollectionSearch(SearchText));
+```
+and `CollectionViewModel.OnNavigatedToAsync` reads it and runs the search.
+
 ## The left menu
-`ShellViewModel` holds the menu items. When `CurrentPage` changes, it highlights the matching item.
+`ShellViewModel` holds the menu items: Dashboard, Collection, Add from photos, Inspection, Market & profitability, Submissions, Reports, Backup & export, Storage locations, and Settings. When `CurrentPage` changes, it highlights the matching item. The window's top bar also has the theme toggle ([[Themes]]).
 
 Related: [[MVVM]]

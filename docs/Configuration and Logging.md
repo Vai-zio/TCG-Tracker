@@ -8,6 +8,18 @@ File: `src/PokemonCardManager.App/appsettings.json`.
 ```
 Empty `DataDirectory` means `%LocalAppData%\PokemonCardManager`.
 
+| Section | Controls | Note |
+|---|---|---|
+| `Storage` | Folders, database name, max photo size | [[SQLite]], [[Photos]] |
+| `Collection` | Default currency | |
+| `Catalogs` | TCGdex on/off, timeout | [[Card Identification]] |
+| `ImageQuality` | Sharpness/brightness limits | [[Inspection]] |
+| `Grading` | Your own defect rules | [[Grading Assessment]] |
+| `Valuation` | Look-back, stale-after days | [[Valuation]] |
+| `Backup` | Backup folder, auto-backup interval | [[Backups and Restore]] |
+
+Settings changed *inside* the app (like the theme) are saved in the database's `AppSettings` table instead, through `ISettingsService`.
+
 ## Options classes
 `Infrastructure/Options/StorageOptions.cs` is a C# class with the same shape as the `"Storage"` section. At startup it is **bound** to that section:
 ```csharp
