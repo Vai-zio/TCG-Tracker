@@ -1,0 +1,57 @@
+<Window x:Class="PokemonCardManager.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pokémon Card Manager" Width="1000" Height="650"
+        FocusManager.FocusedElement="{Binding ElementName=SetNameBox}">
+    <!-- Every {Binding X} reads property X from the DataContext, which is MainViewModel. -->
+    <DockPanel Margin="12">
+
+        <!-- Add a card -->
+        <GroupBox DockPanel.Dock="Top" Header="Add card" Padding="8" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,8,0">
+                    <Label Content="_Set" Target="{Binding ElementName=SetNameBox}" Padding="0" />
+                    <TextBox x:Name="SetNameBox" Width="220" Text="{Binding SetName, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Margin="0,0,8,0">
+                    <Label Content="Card _name" Target="{Binding ElementName=CardNameBox}" Padding="0" />
+                    <TextBox x:Name="CardNameBox" Width="220" Text="{Binding CardName, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Margin="0,0,8,0">
+                    <Label Content="N_umber" Target="{Binding ElementName=NumberBox}" Padding="0" />
+                    <TextBox x:Name="NumberBox" Width="90" Text="{Binding CollectorNumber, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <Button Content="_Add" Command="{Binding AddCardCommand}" IsDefault="True"
+                        VerticalAlignment="Bottom" Padding="16,2" />
+                <TextBlock Text="{Binding Message}" VerticalAlignment="Bottom" Margin="12,0,0,2" TextWrapping="Wrap" MaxWidth="320" />
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Search -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" Content="Search" Command="{Binding LoadCommand}" Padding="12,2" Margin="8,0,0,0" />
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Search by name or collector number">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Return" Command="{Binding LoadCommand}" />
+                </TextBox.InputBindings>
+            </TextBox>
+        </DockPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Summary}" Margin="0,8,0,0" />
+
+        <!-- DataGrid only creates rows that are on screen (virtualization), so long lists stay fast. -->
+        <DataGrid ItemsSource="{Binding Cards}" AutoGenerateColumns="False" IsReadOnly="True"
+                  EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Set" Binding="{Binding SetName}" Width="2*" />
+                <DataGridTextColumn Header="No." Binding="{Binding CollectorNumber}" Width="*" />
+                <DataGridTextColumn Header="Name" Binding="{Binding CardName}" Width="3*" />
+                <DataGridTextColumn Header="Lang" Binding="{Binding Language}" Width="Auto" />
+                <DataGridTextColumn Header="Finish" Binding="{Binding Finish}" Width="*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
+                <DataGridTextColumn Header="Added (UTC)" Binding="{Binding CreatedAt, StringFormat=yyyy-MM-dd}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
