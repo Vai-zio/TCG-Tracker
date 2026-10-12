@@ -1,8 +1,8 @@
 # Pokémon Card Manager (TCG-Tracker)
 
 A Windows desktop app for cataloguing a Pokémon card collection, inspecting card condition,
-and working out which cards are worth sending for professional grading. Work in progress:
-see [Status](#status).
+and working out which cards are worth sending for professional grading. All eight planned milestones
+are built: see [Status](#status), and the [user guide](docs/USER-GUIDE.md) for how to use it.
 
 ## Build, run, test
 
@@ -17,6 +17,20 @@ dotnet run --project src/PokemonCardManager.App # start the app (Windows)
 
 Run these from the repository root (the folder with `PokemonCardManager.sln`). A plain `dotnet run`
 there fails because the root holds a solution, not a runnable project; `--project` says which one to start.
+
+```
+dotnet test --filter "Category!=Performance"   # skip the 20,000-card timing tests (about 30 s)
+```
+
+**Make an installable copy** (includes .NET, so the target PC needs nothing installed):
+
+```
+dotnet publish src/PokemonCardManager.App -p:PublishProfile=win-x64
+```
+
+Copy the whole `artifacts/publish/win-x64` folder to the PC and run `PokemonCardManager.App.exe`.
+Your data doesn't live in that folder, so replacing it with a newer build keeps everything
+(if you edited `appsettings.json`, copy your edited file over the new one).
 
 On first start the database is created at `%LocalAppData%\PokemonCardManager\collection.db`.
 Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManager\logs\`.
@@ -36,6 +50,8 @@ Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManage
 | `Valuation:LookbackDays` | Only prices from this many days back count in summaries (default 365). |
 | `Valuation:StaleAfterDays` | A summary whose newest price is older than this is marked stale (default 90). |
 | `Valuation:MaxRateAgeDays` | Warn when the exchange rate used is this far from a price's date (default 30). |
+| `Backup:Directory` | Where backups go. Empty = `backups` in the data folder. Another drive is safer. |
+| `Backup:AutomaticIntervalDays` | Make a database-only backup at startup when the newest is older than this (default 7, 0 = off). |
 | `Grading:DefectRules` | Your own rules that cap a grade, e.g. `{ "ProfileId": "psa-centering", "Type": "Crease", "MinSeverity": 4, "MaxGrade": 5, "Note": "my experience" }`. Empty by default. |
 | `ImageQuality:*` | Limits for the photo quality check (`MinShortSide`, `MinSharpness`, `GoodSharpness`, `MinBrightness`, `MaxBrightness`, `MaxBrightClipped`). |
 | `Logging:LogLevel` | How much to log. |
@@ -216,12 +232,32 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
     with), estimates only when there are no sales, never asking prices. Cards without a usable price are counted,
     not guessed. The dashboard's value tile now uses this.
 
+**Milestone 8 (hardening): done.**
+- **Backups** (`IBackupService`, Backup & export screen): one `.zip` with a consistent copy of the database (SQLite's
+  online backup, safe while the app runs), optionally every photo, and a manifest with a SHA-256 per file.
+  "Check" verifies every checksum and runs SQLite's integrity check. **Restore** refuses damaged backups and backups
+  from a newer app version, makes a safety backup of the current state first, replaces the database, puts back
+  missing photos (never deletes any), upgrades an older backup's schema, then restarts the app.
+  A database-only backup is made automatically at startup once a week.
+- **CSV export** of the collection and of prices (the price file re-imports with Market → Import CSV).
+- **Scale:** tests insert 20,000 cards and 10,000 prices and time every screen's query. On the build machine all
+  stay under 1 second (first page about 0.6 s, collection value about 0.6 s); the test fails above 3 seconds.
+  The collection value report was rewritten from a per-card subquery to three flat queries to get there.
+- **Startup and shutdown:** only one copy runs at a time (two would share one database); background errors are
+  logged; a failed automatic backup is logged without stopping the app; a startup failure says where the logs and
+  backups are; shutdown closes the database file. Tests cover first start, restart on an existing database,
+  WAL mode, clean shutdown and the first automatic backup.
+- **Packaging:** a self-contained `win-x64` publish profile (see [Build, run, test](#build-run-test)).
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value.
 - Thumbnails are decoded on demand, not cached on disk yet.
 - Search uses `LIKE`, which is fine for 20,000 cards; SQLite full-text search may come later.
-- No sample dataset yet.
+- No sample dataset ships with the app (the 20,000-card test data is generated inside the tests only).
+- Backups aren't encrypted. Keep them somewhere private.
+- The published folder is about 270 MB, mostly the .NET runtime and OpenCV. It isn't code-signed, so Windows
+  SmartScreen may warn the first time.
 - The WPF app compiles and its services are tested on Linux, but the screens themselves have to be
   tried on Windows.
 - Inspection: no automatic card-edge detection or perspective correction yet (comes with identification in
@@ -251,4 +287,4 @@ Known limitations:
 5. ~~Grading assessment~~
 6. ~~Valuation~~
 7. ~~Submission tracking and reports~~
-8. Backups, restore, large-dataset testing, packaging
+8. ~~Backups, restore, large-dataset testing, packaging~~

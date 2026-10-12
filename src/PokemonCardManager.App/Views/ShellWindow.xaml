@@ -61,8 +61,6 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding MainItems}" ItemTemplate="{StaticResource NavItemTemplate}" Focusable="False" />
-                            <TextBlock Text="COMING NEXT" Style="{StaticResource SubtleTextStyle}" Margin="26,18,0,6" FontWeight="SemiBold" />
-                            <ItemsControl ItemsSource="{Binding UpcomingItems}" ItemTemplate="{StaticResource NavItemTemplate}" Focusable="False" />
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>

@@ -49,6 +49,9 @@
             <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
                 <views:ReportsView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BackupViewModel}">
+                <views:BackupView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:StorageLocationsViewModel}">
                 <views:StorageLocationsView />
             </DataTemplate>

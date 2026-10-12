@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddOptions<GradingOptions>().Bind(configuration.GetSection(GradingOptions.SectionName));
         services.AddOptions<CatalogOptions>().Bind(configuration.GetSection(CatalogOptions.SectionName));
         services.AddOptions<ImageQualityThresholds>().Bind(configuration.GetSection(ImageQualityThresholds.SectionName));
+        services.AddOptions<BackupOptions>().Bind(configuration.GetSection(BackupOptions.SectionName));
         services.AddOptions<ValuationOptions>().Bind(configuration.GetSection(ValuationOptions.SectionName));
 
         services.TryAddSingleton<IClock, SystemClock>();
@@ -91,6 +92,8 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<SubmissionInput>, SubmissionInputValidator>();
         services.AddSingleton<ISubmissionService, SubmissionService>();
         services.AddSingleton<IReportService, ReportService>();
+        services.AddSingleton<IBackupService, BackupService>();
+        services.AddSingleton<IExportService, ExportService>();
         return services;
     }
 }

@@ -79,24 +79,25 @@ public sealed class ReportService(
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         var today = DateOnly.FromDateTime(clock.UtcNow);
 
+        // Three flat queries joined in memory: a per-card subquery or a 20,000-id IN list is far slower in SQLite.
         var cards = await db.PhysicalCards.AsNoTracking()
             .Where(c => c.Status != WorkflowStatus.Sold && c.Status != WorkflowStatus.Traded)
             .Select(c => new
             {
                 c.Id, c.CardReferenceId,
                 Card = c.CardReference.Name + " · " + c.CardReference.CardSet.Name + " " + c.CardReference.CollectorNumber,
-                // The grade from the latest returned submission, if the card came back graded.
-                Graded = db.SubmissionItems
-                    .Where(i => i.PhysicalCardId == c.Id && i.ReturnedGrade != null && i.GradingSubmission.Status == SubmissionStatus.Returned)
-                    .OrderByDescending(i => i.GradingSubmission.SubmittedOn)
-                    .Select(i => new { i.GradingSubmission.GradingCompany.Code, i.ReturnedGrade })
-                    .FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 
-        var referenceIds = cards.Select(c => c.CardReferenceId).Distinct().ToList();
+        // The grade from each card's latest returned submission, if it came back graded.
+        var gradedByCard = (await db.SubmissionItems.AsNoTracking()
+                .Where(i => i.ReturnedGrade != null && i.GradingSubmission.Status == SubmissionStatus.Returned)
+                .Select(i => new { i.PhysicalCardId, i.GradingSubmission.GradingCompany.Code, Grade = i.ReturnedGrade!.Value, i.GradingSubmission.SubmittedOn, i.GradingSubmission.UpdatedAt })
+                .ToListAsync(cancellationToken))
+            .GroupBy(i => i.PhysicalCardId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(i => i.SubmittedOn).ThenByDescending(i => i.UpdatedAt).First());
+
         var prices = (await db.PriceObservations.AsNoTracking()
-                .Where(p => referenceIds.Contains(p.CardReferenceId))
                 .Select(p => new { p.CardReferenceId, Company = (string?)p.GradingCompany!.Code, p.Grade, p.Price, p.Currency, p.ObservationType, p.SaleDate, p.ObservedAt, p.Quality, p.Source })
                 .ToListAsync(cancellationToken))
             .ToLookup(p => (p.CardReferenceId, p.Company, p.Grade),
@@ -116,9 +117,10 @@ public sealed class ReportService(
         var rows = new List<CardValueRow>();
         foreach (var card in cards)
         {
-            var key = (card.CardReferenceId, card.Graded?.Code, card.Graded?.ReturnedGrade);
+            var graded = gradedByCard.GetValueOrDefault(card.Id);
+            var key = (card.CardReferenceId, graded?.Code, graded is null ? (decimal?)null : graded.Grade);
             if (Value(key) is not { Median: { } median } summary) continue;
-            rows.Add(new CardValueRow(card.Id, card.Card, card.Graded is null ? "Raw" : $"{card.Graded.Code} {card.Graded.ReturnedGrade:0.#}",
+            rows.Add(new CardValueRow(card.Id, card.Card, graded is null ? "Raw" : $"{graded.Code} {graded.Grade:0.#}",
                 median, summary.Type == PriceObservationType.CompletedSale ? ValueBasis.CompletedSales : ValueBasis.Estimates,
                 summary.Count, summary.Newest!.Value, summary.IsStale));
         }

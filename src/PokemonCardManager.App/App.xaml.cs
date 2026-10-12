@@ -26,10 +26,25 @@ namespace PokemonCardManager.App;
 public partial class App : Application
 {
     private IHost? _host;
+    private Mutex? _singleInstance;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // One copy at a time: two apps writing the same database and photo folder could step on each other.
+        _singleInstance = new Mutex(initiallyOwned: true, @"Local\PokemonCardManager", out var isFirst);
+        if (!isFirst)
+        {
+            // A restart after a restore can briefly overlap with the closing copy, so wait a moment before giving up.
+            if (!WaitForOtherCopy(_singleInstance))
+            {
+                MessageBox.Show("Pokémon Card Manager is already running.", "Pokémon Card Manager", MessageBoxButton.OK, MessageBoxImage.Information);
+                _singleInstance = null;
+                Shutdown(0);
+                return;
+            }
+        }
 
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
         {
@@ -62,11 +77,20 @@ public partial class App : Application
         builder.Services.AddTransient<MarketViewModel>();
         builder.Services.AddTransient<SubmissionsViewModel>();
         builder.Services.AddTransient<ReportsViewModel>();
+        builder.Services.AddTransient<BackupViewModel>();
         builder.Services.AddTransient<IdentifyViewModel>(); // leaving with unadded matches asks first
 
         _host = builder.Build();
         var logger = _host.Services.GetRequiredService<ILogger<App>>();
         DispatcherUnhandledException += (_, args) => OnUnhandledException(logger, args);
+        // Errors outside the UI thread: logged, so nothing fails silently.
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            logger.LogError(args.Exception, "Unobserved background task exception");
+            args.SetObserved();
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            logger.LogCritical(args.ExceptionObject as Exception, "Fatal unhandled exception");
 
         try
         {
@@ -77,10 +101,21 @@ public partial class App : Application
         catch (Exception ex)
         {
             logger.LogCritical(ex, "Startup failed");
-            MessageBox.Show($"The app could not start.\n\n{ex.Message}\n\nDetails are in the log folder.",
+            MessageBox.Show($"The app could not start.\n\n{ex.Message}\n\nDetails are in {Path.GetDirectoryName(logFile)}. " +
+                            $"Backups are in {Path.Combine(storage.ResolveDataDirectory(), "backups")} unless Backup:Directory says otherwise.",
                 "Pokémon Card Manager", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
             return;
+        }
+
+        // Weekly safety net. A failure here must not stop the app, so it's logged and skipped.
+        try
+        {
+            await _host.Services.GetRequiredService<IBackupService>().CreateAutomaticIfDueAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Automatic backup failed");
         }
 
         var window = _host.Services.GetRequiredService<ShellWindow>();
@@ -98,7 +133,22 @@ public partial class App : Application
             await _host.StopAsync(TimeSpan.FromSeconds(5));
             _host.Dispose(); // flushes log files
         }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); // closes the database file cleanly
+        _singleInstance?.ReleaseMutex();
+        _singleInstance?.Dispose();
         base.OnExit(e);
+    }
+
+    private static bool WaitForOtherCopy(Mutex mutex)
+    {
+        try
+        {
+            return mutex.WaitOne(TimeSpan.FromSeconds(10));
+        }
+        catch (AbandonedMutexException)
+        {
+            return true; // the other copy crashed without releasing it; we own it now
+        }
     }
 
     private static void OnUnhandledException(Microsoft.Extensions.Logging.ILogger logger, DispatcherUnhandledExceptionEventArgs args)

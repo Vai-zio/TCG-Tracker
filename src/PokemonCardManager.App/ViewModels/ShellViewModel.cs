@@ -30,13 +30,10 @@ public sealed class ShellViewModel : ViewModelBase
                 () => navigation.NavigateToAsync<SubmissionsViewModel>()),
             new NavItem("Reports", "\uE9D2", p => p is ReportsViewModel,
                 () => navigation.NavigateToAsync<ReportsViewModel>()),
+            new NavItem("Backup & export", "\uE8F1", p => p is BackupViewModel,
+                () => navigation.NavigateToAsync<BackupViewModel>()),
             new NavItem("Storage locations", "", p => p is StorageLocationsViewModel,
                 () => navigation.NavigateToAsync<StorageLocationsViewModel>()),
-        ];
-        // Shown so the plan is visible, but disabled until they're built. No fake screens.
-        UpcomingItems =
-        [
-            NavItem.Upcoming("Import / export", "", "Milestone 8"),
         ];
         SettingsItem = new NavItem("Settings", "", p => p is SettingsViewModel, () => navigation.NavigateToAsync<SettingsViewModel>());
 
@@ -50,7 +47,6 @@ public sealed class ShellViewModel : ViewModelBase
     public NavigationService Navigation { get; }
     public ThemeService Theme { get; }
     public IReadOnlyList<NavItem> MainItems { get; }
-    public IReadOnlyList<NavItem> UpcomingItems { get; }
     public NavItem SettingsItem { get; }
 
     public string SearchText { get => _searchText; set => SetProperty(ref _searchText, value); }
@@ -80,9 +76,6 @@ public sealed class NavItem : ViewModelBase
         _matches = matches;
         Command = new AsyncRelayCommand(navigate, () => enabled);
     }
-
-    public static NavItem Upcoming(string title, string glyph, string milestone) =>
-        new(title, glyph, _ => false, () => Task.CompletedTask, enabled: false, note: $"Coming in {milestone}");
 
     public string Title { get; }
     /// <summary>Icon character from the Segoe Fluent Icons / MDL2 Assets font.</summary>

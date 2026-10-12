@@ -11,6 +11,7 @@ public interface IDialogService
 {
     bool Confirm(string title, string message, string confirmButtonText = "OK");
     void ShowError(string title, string message);
+    void ShowInfo(string title, string message);
     IReadOnlyList<string> PickImageFiles(IEnumerable<string> extensions);
     /// <summary>One file, or null if the user cancelled. Filter uses the WPF format, e.g. "CSV files|*.csv".</summary>
     string? PickFile(string title, string filter);
@@ -28,6 +29,9 @@ public sealed class DialogService : IDialogService
 
     public void ShowError(string title, string message) =>
         MessageBox.Show(Owner(), message, $"{title} – {AppName}", MessageBoxButton.OK, MessageBoxImage.Error);
+
+    public void ShowInfo(string title, string message) =>
+        MessageBox.Show(Owner(), message, $"{title} – {AppName}", MessageBoxButton.OK, MessageBoxImage.Information);
 
     public IReadOnlyList<string> PickImageFiles(IEnumerable<string> extensions)
     {
