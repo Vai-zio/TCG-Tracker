@@ -63,6 +63,8 @@ public partial class App : Application
 
         builder.Services.AddSingleton<PokemonCardManager.Core.Identification.IOcrEngine, Ocr.WindowsOcrEngine>(); // before AddInfrastructure, which only adds a fallback
         builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddTransient<UnlockViewModel>();
+        builder.Services.AddTransient<UnlockWindow>();
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<NavigationService>();
         builder.Services.AddSingleton<ThemeService>();
@@ -108,6 +110,13 @@ public partial class App : Application
             return;
         }
 
+        // Lock screen before anything else is shown. Closing it without unlocking quits the app.
+        if (!Unlock())
+        {
+            Shutdown(0);
+            return;
+        }
+
         // Weekly safety net. A failure here must not stop the app, so it's logged and skipped.
         try
         {
@@ -120,6 +129,7 @@ public partial class App : Application
 
         var window = _host.Services.GetRequiredService<ShellWindow>();
         MainWindow = window;
+        ShutdownMode = ShutdownMode.OnMainWindowClose; // back to normal now the real main window exists
         window.Show();
         await _host.Services.GetRequiredService<NavigationService>().NavigateToAsync<DashboardViewModel>();
         logger.LogInformation("Started, database at {DatabasePath}",
@@ -137,6 +147,17 @@ public partial class App : Application
         _singleInstance?.ReleaseMutex();
         _singleInstance?.Dispose();
         base.OnExit(e);
+    }
+
+    /// <summary>Shows the create/unlock screen. Returns true once the vault holds the data key.</summary>
+    private bool Unlock()
+    {
+        // WPF treats the first window it opens as the main window. With OnMainWindowClose,
+        // closing this lock screen would end the app before the real window opens, so
+        // shutdown is made explicit until the shell takes over.
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        var unlockWindow = _host!.Services.GetRequiredService<UnlockWindow>();
+        return unlockWindow.ShowDialog() == true;
     }
 
     private static bool WaitForOtherCopy(Mutex mutex)

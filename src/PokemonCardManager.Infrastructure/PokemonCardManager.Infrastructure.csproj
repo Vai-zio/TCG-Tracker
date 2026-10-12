@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PokemonCardManager.Core\PokemonCardManager.Core.csproj" />
+    <ProjectReference Include="..\PokemonCardManager.Security\PokemonCardManager.Security.csproj" />
   </ItemGroup>
 
   <ItemGroup>
