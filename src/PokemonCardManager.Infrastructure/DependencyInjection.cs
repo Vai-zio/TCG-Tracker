@@ -7,6 +7,8 @@ using Microsoft.Extensions.Options;
 using PokemonCardManager.Core.Common;
 using PokemonCardManager.Core.Services;
 using PokemonCardManager.Core.Validation;
+using PokemonCardManager.Core.Inspection;
+using PokemonCardManager.Infrastructure.Imaging;
 using PokemonCardManager.Infrastructure.Images;
 using PokemonCardManager.Infrastructure.Options;
 using PokemonCardManager.Infrastructure.Persistence;
@@ -24,6 +26,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.SectionName));
+        services.AddOptions<ImageQualityThresholds>().Bind(configuration.GetSection(ImageQualityThresholds.SectionName));
 
         services.TryAddSingleton<IClock, SystemClock>();
         services.AddSingleton<HistoryProtectionInterceptor>();
@@ -49,6 +52,9 @@ public static class DependencyInjection
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IDashboardService, DashboardService>();
         services.AddSingleton<IDatabaseInitializer, DatabaseInitializer>();
+        services.AddSingleton<IValidator<InspectionInput>, InspectionInputValidator>();
+        services.AddSingleton<IImageAnalyzer, OpenCvImageAnalyzer>();
+        services.AddSingleton<IInspectionService, InspectionService>();
         services.AddSingleton<ICollectionService, CollectionService>();
         return services;
     }
