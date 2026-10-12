@@ -3,11 +3,11 @@ using PokemonCardManager.Core.Validation;
 
 namespace PokemonCardManager.Tests.Domain;
 
-public class NewPhysicalCardValidatorTests
+public class PhysicalCardInputValidatorTests
 {
-    private readonly NewPhysicalCardValidator _validator = new();
+    private readonly PhysicalCardInputValidator _validator = new();
 
-    private static NewPhysicalCard Valid() => new() { SetName = "Base Set", CardName = "Charizard", CollectorNumber = "4" };
+    private static PhysicalCardInput Valid() => new() { SetName = "Base Set", CardName = "Charizard", CollectorNumber = "4" };
 
     [Fact]
     public void Accepts_a_minimal_card()
@@ -19,15 +19,15 @@ public class NewPhysicalCardValidatorTests
     public void Requires_set_name_and_number()
     {
         var result = _validator.Validate(Valid() with { SetName = " ", CollectorNumber = "" });
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(NewPhysicalCard.SetName));
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(NewPhysicalCard.CollectorNumber));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PhysicalCardInput.SetName));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PhysicalCardInput.CollectorNumber));
     }
 
     [Fact]
     public void Price_requires_a_currency()
     {
         var result = _validator.Validate(Valid() with { PurchasePrice = 50m });
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(NewPhysicalCard.PurchaseCurrency));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PhysicalCardInput.PurchaseCurrency));
     }
 
     [Fact]

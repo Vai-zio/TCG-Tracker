@@ -4,17 +4,22 @@ using PokemonCardManager.Core.Services;
 
 namespace PokemonCardManager.Core.Validation;
 
-/// <summary>Rules for manually added cards. Lives in Core so every caller gets the same rules.</summary>
-public class NewPhysicalCardValidator : AbstractValidator<NewPhysicalCard>
+/// <summary>Rules for adding or editing a card. Lives in Core so every caller gets the same rules.</summary>
+public class PhysicalCardInputValidator : AbstractValidator<PhysicalCardInput>
 {
-    public NewPhysicalCardValidator()
+    public PhysicalCardInputValidator()
     {
         RuleFor(c => c.SetName).NotEmpty().MaximumLength(200);
         RuleFor(c => c.CardName).NotEmpty().MaximumLength(200);
         RuleFor(c => c.CollectorNumber).NotEmpty().MaximumLength(20);
         RuleFor(c => c.Language).NotEmpty().Length(2).WithMessage("Use a two-letter language code, e.g. en or ja.");
         RuleFor(c => c.Edition).NotNull().MaximumLength(50);
+        RuleFor(c => c.Subject).MaximumLength(100);
+        RuleFor(c => c.Rarity).MaximumLength(50);
+        RuleFor(c => c.ReleaseYear).InclusiveBetween(1996, 2100).When(c => c.ReleaseYear is not null);
         RuleFor(c => c.Finish).IsInEnum();
+        RuleFor(c => c.Category).IsInEnum();
+        RuleFor(c => c.Status).IsInEnum();
         RuleFor(c => c.RawCondition).IsInEnum();
 
         RuleFor(c => c.PurchasePrice)

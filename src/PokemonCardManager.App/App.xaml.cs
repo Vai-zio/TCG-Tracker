@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PokemonCardManager.App.Dialogs;
+using PokemonCardManager.App.Navigation;
 using PokemonCardManager.App.ViewModels;
 using PokemonCardManager.App.Views;
 using PokemonCardManager.Core.Services;
@@ -44,8 +46,13 @@ public partial class App : Application
             .CreateLogger(), dispose: true);
 
         builder.Services.AddInfrastructure(builder.Configuration);
-        builder.Services.AddTransient<MainViewModel>();
-        builder.Services.AddTransient<MainWindow>();
+        builder.Services.AddSingleton<IDialogService, DialogService>();
+        builder.Services.AddSingleton<NavigationService>();
+        builder.Services.AddSingleton<ShellViewModel>();
+        builder.Services.AddSingleton<ShellWindow>();
+        builder.Services.AddSingleton<CollectionViewModel>(); // singleton: keeps filters between visits
+        builder.Services.AddTransient<CardEditorViewModel>();  // transient: a fresh form each time
+        builder.Services.AddTransient<StorageLocationsViewModel>();
 
         _host = builder.Build();
         var logger = _host.Services.GetRequiredService<ILogger<App>>();
@@ -65,9 +72,10 @@ public partial class App : Application
             return;
         }
 
-        var window = _host.Services.GetRequiredService<MainWindow>();
+        var window = _host.Services.GetRequiredService<ShellWindow>();
         MainWindow = window;
         window.Show();
+        await _host.Services.GetRequiredService<NavigationService>().NavigateToAsync<CollectionViewModel>();
         logger.LogInformation("Started, database at {DatabasePath}",
             _host.Services.GetRequiredService<IOptions<StorageOptions>>().Value.ResolveDatabasePath());
     }

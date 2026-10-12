@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using PokemonCardManager.Core.Common;
 using PokemonCardManager.Core.Services;
 using PokemonCardManager.Core.Validation;
+using PokemonCardManager.Infrastructure.Images;
 using PokemonCardManager.Infrastructure.Options;
 using PokemonCardManager.Infrastructure.Persistence;
 using PokemonCardManager.Infrastructure.Persistence.Interceptors;
@@ -41,7 +42,10 @@ public static class DependencyInjection
                     provider.GetRequiredService<TimestampAndAuditInterceptor>());
         });
 
-        services.AddSingleton<IValidator<NewPhysicalCard>, NewPhysicalCardValidator>();
+        services.AddSingleton<IValidator<PhysicalCardInput>, PhysicalCardInputValidator>();
+        services.AddSingleton<ImageFileStore>();
+        services.AddSingleton<IImageService, ImageService>();
+        services.AddSingleton<IStorageLocationService, StorageLocationService>();
         services.AddSingleton<IDatabaseInitializer, DatabaseInitializer>();
         services.AddSingleton<ICollectionService, CollectionService>();
         return services;

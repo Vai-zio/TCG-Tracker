@@ -44,7 +44,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("ConditionAssessmentId", "Category")
                         .IsUnique();
 
-                    b.ToTable("CategoryFindings", t =>
+                    b.ToTable("CategoryFindings", null, t =>
                         {
                             t.HasCheckConstraint("CK_CategoryFindings_Severity", "\"Severity\" BETWEEN 0 AND 5");
                         });
@@ -98,7 +98,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ConditionAssessmentId");
 
-                    b.ToTable("CenteringMeasurements");
+                    b.ToTable("CenteringMeasurements", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Assessment.ConditionAssessment", b =>
@@ -168,7 +168,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PhysicalCardId", "AssessedAt");
 
-                    b.ToTable("ConditionAssessments", t =>
+                    b.ToTable("ConditionAssessments", null, t =>
                         {
                             t.HasCheckConstraint("CK_ConditionAssessments_GradeRange", "\"EstimatedGradeLow\" IS NULL OR \"EstimatedGradeHigh\" IS NULL OR \"EstimatedGradeLow\" <= \"EstimatedGradeHigh\"");
                         });
@@ -244,7 +244,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ConditionAssessmentId");
 
-                    b.ToTable("Defects", t =>
+                    b.ToTable("Defects", null, t =>
                         {
                             t.HasCheckConstraint("CK_Defects_Severity", "\"Severity\" BETWEEN 0 AND 5");
                         });
@@ -334,7 +334,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("CardSetId", "CollectorNumber", "Language", "Finish", "Edition")
                         .IsUnique();
 
-                    b.ToTable("CardReferences");
+                    b.ToTable("CardReferences", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Catalog.CardSet", b =>
@@ -373,7 +373,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("CardSets");
+                    b.ToTable("CardSets", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Catalog.ExternalCardIdentifier", b =>
@@ -402,7 +402,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Provider", "ExternalId")
                         .IsUnique();
 
-                    b.ToTable("ExternalCardIdentifiers");
+                    b.ToTable("ExternalCardIdentifiers", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Collection.CardImage", b =>
@@ -482,7 +482,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("StorageKey")
                         .IsUnique();
 
-                    b.ToTable("CardImages");
+                    b.ToTable("CardImages", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Collection.PhysicalCard", b =>
@@ -548,7 +548,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StorageLocationId");
 
-                    b.ToTable("PhysicalCards");
+                    b.ToTable("PhysicalCards", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Collection.StorageLocation", b =>
@@ -580,7 +580,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("ParentId", "Name")
                         .IsUnique();
 
-                    b.ToTable("StorageLocations");
+                    b.ToTable("StorageLocations", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Market.ExchangeRate", b =>
@@ -615,7 +615,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("FromCurrency", "ToCurrency", "AsOf", "Source")
                         .IsUnique();
 
-                    b.ToTable("ExchangeRates");
+                    b.ToTable("ExchangeRates", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Market.GradingCompany", b =>
@@ -644,7 +644,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("GradingCompanies");
+                    b.ToTable("GradingCompanies", (string)null);
 
                     b.HasData(
                         new
@@ -728,7 +728,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CardReferenceId", "ObservedAt");
 
-                    b.ToTable("PriceObservations", t =>
+                    b.ToTable("PriceObservations", null, t =>
                         {
                             t.HasCheckConstraint("CK_PriceObservations_GradedIdentity", "(\"GradingCompanyId\" IS NULL) = (\"Grade\" IS NULL)");
                         });
@@ -754,7 +754,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("AppSettings");
+                    b.ToTable("AppSettings", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.AuditEntry", b =>
@@ -789,7 +789,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("EntityType", "EntityId");
 
-                    b.ToTable("AuditEntries");
+                    b.ToTable("AuditEntries", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.BackupRecord", b =>
@@ -827,7 +827,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CreatedAt");
 
-                    b.ToTable("BackupRecords");
+                    b.ToTable("BackupRecords", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.ImportJob", b =>
@@ -873,7 +873,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StartedAt");
 
-                    b.ToTable("ImportJobs");
+                    b.ToTable("ImportJobs", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.SavedFilter", b =>
@@ -900,7 +900,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("SavedFilters");
+                    b.ToTable("SavedFilters", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Submissions.GradingSubmission", b =>
@@ -970,7 +970,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("GradingSubmissions");
+                    b.ToTable("GradingSubmissions", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Submissions.SubmissionItem", b =>
@@ -1011,7 +1011,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("GradingSubmissionId", "PhysicalCardId")
                         .IsUnique();
 
-                    b.ToTable("SubmissionItems");
+                    b.ToTable("SubmissionItems", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Transactions.CardTransaction", b =>
@@ -1058,7 +1058,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Date");
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Transactions.TransactionLine", b =>
@@ -1083,7 +1083,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("CardTransactionId", "PhysicalCardId")
                         .IsUnique();
 
-                    b.ToTable("TransactionLines");
+                    b.ToTable("TransactionLines", (string)null);
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Assessment.CategoryFinding", b =>

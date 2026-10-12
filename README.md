@@ -15,8 +15,8 @@ dotnet test                                     # run all tests
 dotnet run --project src/PokemonCardManager.App # start the app (Windows)
 ```
 
-On first start the database is created at `%LocalAppData%\PokemonCardManager\collection.db`
-and logs are written to `%LocalAppData%\PokemonCardManager\logs\`.
+On first start the database is created at `%LocalAppData%\PokemonCardManager\collection.db`.
+Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManager\logs\`.
 
 ## Configure
 
@@ -26,6 +26,8 @@ and logs are written to `%LocalAppData%\PokemonCardManager\logs\`.
 | --- | --- |
 | `Storage:DataDirectory` | Folder for the database and logs. Empty = `%LocalAppData%\PokemonCardManager`. |
 | `Storage:DatabaseFileName` | Database file name (a plain name, no folders). |
+| `Storage:MaxImageSizeMegabytes` | Largest photo accepted for import. |
+| `Collection:DefaultCurrency` | Currency pre-filled for purchase prices, e.g. `DKK`. |
 | `Logging:LogLevel` | How much to log. |
 
 No secrets belong in this file. API keys for future integrations will use local secret storage.
@@ -48,6 +50,9 @@ App (WPF, MVVM) ──► Core ◄── Infrastructure (EF Core + SQLite)
 - **App**: the window. *Views* (XAML) only lay things out and `{Binding}` to *ViewModels*, which hold
   state and commands and call Core interfaces. `App.xaml.cs` builds the .NET Generic Host
   (configuration + logging + dependency injection), upgrades the database, then opens the window.
+  - *Navigation* is "ViewModel first": `NavigationService` swaps the current ViewModel and the
+    DataTemplates in `App.xaml` pick the matching view. Pages with unsaved edits are asked about first.
+  - *Styles* live in `Resources/Theme.xaml` (colours, buttons, inputs, tables), so screens look consistent.
 - **Tests**: xUnit. Unit tests for Core rules; integration tests that run the real app wiring
   against a temporary SQLite file.
 
@@ -66,6 +71,11 @@ App (WPF, MVVM) ──► Core ◄── Infrastructure (EF Core + SQLite)
   edited or deleted (only their review status can change). Re-inspecting adds a new assessment.
   Cards with history can't be deleted (database `RESTRICT` foreign keys).
 - **Prices are observations**, one row each, typed as asking price, completed sale or estimate.
+- **Photos** are copied byte-for-byte into the images folder (never re-compressed) with a SHA-256 hash.
+  The database stores only the path, size, hash and capture date. Files are checked by their content,
+  not just the extension, and a key can never point outside the images folder.
+- **Big collections**: filtering, sorting and paging run in SQLite; the screen loads one page (200 cards)
+  at a time, tables only create visible rows, and thumbnails are decoded small, on a background thread.
 - **Grade estimates** are optional fields that stay empty unless a validated method supports them.
   They are preliminary and never official grades. Defect severity uses an internal 0–5 scale.
 
@@ -86,6 +96,7 @@ A test fails if the model changes without a migration. The app applies new migra
 | Microsoft.Extensions.Hosting (DI, configuration, logging) | App composition | MIT |
 | FluentValidation | Input validation | Apache 2.0 |
 | Serilog.Extensions.Logging, Serilog.Sinks.File | Log files | Apache 2.0 |
+| MetadataExtractor | Reading image size, type and capture date | Apache 2.0 |
 | xUnit, Microsoft.NET.Test.Sdk, coverlet | Tests | Apache 2.0 / MIT |
 
 ## Status
@@ -95,19 +106,30 @@ initial migration, full domain model (catalog, physical cards, storage locations
 defects, prices, exchange rates, transactions, submissions, settings, saved filters, import jobs,
 backups, audit log), and tests.
 
-The app window is a basic placeholder: it lists cards, searches by name/number and adds a card
-manually. It shows the first 500 matches.
+**Milestone 2 (collection management): done.**
+- Window with left navigation, shared styles and keyboard shortcuts (Ctrl+N new, Ctrl+S save, Esc back,
+  Enter open, Delete remove, F5 refresh).
+- Collection browser: table or thumbnail-grid view, search by name/Pokémon/number, filters (set, language,
+  rarity, finish, condition, status, storage location incl. nested), sorting, paging.
+- Card editor: add and edit all printing and copy details, delete (refused when the card has history),
+  unsaved-changes warning.
+- Photos: import JPEG/PNG/BMP/TIFF per card with type and side; originals kept untouched.
+- Storage locations: nested binders/pages/pockets/boxes/shelves, with card counts; safe delete.
 
 Known limitations:
-- No screens yet for images, inspection, prices, submissions or settings (the tables exist).
+- Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
+  (the table exists) and filtering by value (comes with valuation in Milestone 6).
+- Photos open in the Windows photo viewer; the in-app zoom/pan viewer is Milestone 3.
+- Thumbnails are decoded on demand, not cached on disk yet.
+- Search uses `LIKE`, which is fine for 20,000 cards; SQLite full-text search may come later.
 - No sample dataset yet.
-- Full-text search is a simple `LIKE` scan; fine for 20,000 cards, may move to SQLite FTS later.
-- The WPF app compiles in CI-like environments but has only been run on Windows by the user.
+- The WPF app compiles and its services are tested on Linux, but the screens themselves have to be
+  tried on Windows.
 
 ### Roadmap
 
 1. ~~Foundation~~
-2. Collection management: navigation shell, browsing, editing, image storage, filters, storage locations
+2. ~~Collection management~~
 3. Image inspection: viewer, zoom/pan/rotate, quality checks, defect annotation, centering
 4. Identification: catalog provider abstraction, OCR, matching, manual fallback, batch scan
 5. Grading assessment: rule-based engine, evidence and confidence reporting, company profiles
