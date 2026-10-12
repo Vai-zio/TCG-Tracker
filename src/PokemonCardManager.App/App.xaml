@@ -19,6 +19,7 @@
             <conv:NotEmptyToVisibilityConverter x:Key="NotEmptyToVisibility" />
             <conv:EmptyToVisibilityConverter x:Key="EmptyToVisibility" />
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
 
             <!--
                 How navigation finds a view: when the shell shows a ViewModel,
@@ -32,6 +33,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:CardEditorViewModel}">
                 <views:CardEditorView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:InspectionViewModel}">
+                <views:InspectionView />
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:StorageLocationsViewModel}">
                 <views:StorageLocationsView />

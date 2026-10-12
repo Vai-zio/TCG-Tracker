@@ -39,3 +39,31 @@ public static class DefectCategories
         return Enum.GetValues<DefectType>().Where(t => CategoryOf(t, typicalRegion) == category).ToList();
     }
 }
+
+public static class DefectRegions
+{
+    /// <summary>
+    /// A first guess at where a marked box is, from its centre: near two edges is a corner, near one edge is
+    /// that edge, otherwise the surface. "Near" is the outer 15% of the photo. The user can always correct it,
+    /// and the guess assumes the card fills most of the photo.
+    /// </summary>
+    public static CardRegion Guess(Services.NormalizedBox box)
+    {
+        const double near = 0.15;
+        var cx = box.X + box.Width / 2;
+        var cy = box.Y + box.Height / 2;
+        bool left = cx < near, right = cx > 1 - near, top = cy < near, bottom = cy > 1 - near;
+        return (left, right, top, bottom) switch
+        {
+            (true, _, true, _) => CardRegion.TopLeftCorner,
+            (_, true, true, _) => CardRegion.TopRightCorner,
+            (true, _, _, true) => CardRegion.BottomLeftCorner,
+            (_, true, _, true) => CardRegion.BottomRightCorner,
+            (true, _, _, _) => CardRegion.LeftEdge,
+            (_, true, _, _) => CardRegion.RightEdge,
+            (_, _, true, _) => CardRegion.TopEdge,
+            (_, _, _, true) => CardRegion.BottomEdge,
+            _ => CardRegion.Surface,
+        };
+    }
+}

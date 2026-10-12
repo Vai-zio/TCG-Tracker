@@ -57,6 +57,7 @@ public partial class App : Application
         builder.Services.AddTransient<StorageLocationsViewModel>();
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddTransient<InspectionViewModel>();
 
         _host = builder.Build();
         var logger = _host.Services.GetRequiredService<ILogger<App>>();

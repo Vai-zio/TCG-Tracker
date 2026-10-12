@@ -11,6 +11,7 @@
         <DockPanel DockPanel.Dock="Top">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                 <Button Content="Edit" Command="{Binding EditCardCommand}" Margin="0,0,8,0" />
+                <Button Content="Inspect" Command="{Binding InspectCardCommand}" Margin="0,0,8,0" />
                 <Button Content="Delete" Command="{Binding DeleteCardCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="_New card (Ctrl+N)" Command="{Binding NewCardCommand}" Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>

@@ -103,6 +103,7 @@ A test fails if the model changes without a migration. The app applies new migra
 | FluentValidation | Input validation | Apache 2.0 |
 | Serilog.Extensions.Logging, Serilog.Sinks.File | Log files | Apache 2.0 |
 | MetadataExtractor | Reading image size, type and capture date | Apache 2.0 |
+| OpenCvSharp4 (+ runtime.win in the app, official.runtime.linux-x64 in tests) | Photo quality analysis (later: card detection) | Apache 2.0 (OpenCV itself: Apache 2.0) |
 | xUnit, Microsoft.NET.Test.Sdk, coverlet | Tests | Apache 2.0 / MIT |
 
 ## Status
@@ -127,21 +128,38 @@ moon/sun button in the top bar). Sidebar with the screens still to come listed a
 (Ctrl+K), a dashboard (counts, rarity mix, collection health, recent activity) and a thumbnail grid that
 shows each card as a tile. The dashboard's value tile shows "—" until market prices exist (Milestone 6).
 
+**Milestone 3 (image inspection): done.**
+- Inspection workspace (sidebar → Inspection, or Inspect on a card, or click a card's photo): zoom (wheel, buttons,
+  Fit, 100%), pan (drag), rotate, and side-by-side comparison of two photos (front/back or before/after).
+- Photo quality check runs automatically with OpenCV: sharpness (variance of the Laplacian on a copy scaled to
+  1600 px), brightness and clipped pixels. It rates a photo Good / Acceptable / Inadequate and says what to retake.
+  Thresholds are starting values and can be changed in `appsettings.json` under `ImageQuality`.
+- Defect annotation: drag a box on the photo; type, internal 0–5 severity, region (guessed from the box) and notes.
+  Boxes are stored as fractions of the photo so they survive resizing.
+- Centering: drag eight guide lines (card edge and inner border edge on each side). Gives L/R and T/B ratios with a
+  ± margin for a 2 px placement error. Not perspective-corrected yet, so photos should be taken straight on.
+- Condition history: each saved inspection is a new permanent record (the database refuses edits, except the review
+  status). Areas you didn't tick are saved as "not inspected", and an inspection is flagged "limited evidence" when
+  areas are missing or a photo was inadequate. No grade is produced; that needs the assessment engine (Milestone 5).
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value (comes with valuation in Milestone 6).
-- Photos open in the Windows photo viewer; the in-app zoom/pan viewer is Milestone 3.
 - Thumbnails are decoded on demand, not cached on disk yet.
 - Search uses `LIKE`, which is fine for 20,000 cards; SQLite full-text search may come later.
 - No sample dataset yet.
 - The WPF app compiles and its services are tested on Linux, but the screens themselves have to be
   tried on Windows.
+- Inspection: no automatic card-edge detection or perspective correction yet (comes with identification in
+  Milestone 4); marks from past inspections are listed in History but not redrawn on the photo; phone photos are
+  shown as stored, so use Rotate if one appears sideways.
+- The bundled OpenCV library is for 64-bit (x64) Windows.
 
 ### Roadmap
 
 1. ~~Foundation~~
 2. ~~Collection management~~
-3. Image inspection: viewer, zoom/pan/rotate, quality checks, defect annotation, centering
+3. ~~Image inspection~~
 4. Identification: catalog provider abstraction, OCR, matching, manual fallback, batch scan
 5. Grading assessment: rule-based engine, evidence and confidence reporting, company profiles
 6. Valuation: price history, manual entry and CSV import, expected value and break-even

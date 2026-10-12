@@ -21,6 +21,7 @@
         <DockPanel DockPanel.Dock="Top">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                 <Button Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="_Inspect" Command="{Binding InspectCommand}" Margin="0,0,8,0" ToolTip="Check photos, mark defects and measure centering" />
                 <Button Content="Back (Esc)" Command="{Binding BackCommand}" Margin="0,0,8,0" />
                 <Button Content="_Save (Ctrl+S)" Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>
@@ -153,7 +154,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Button Command="{Binding DataContext.OpenPhotoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}" Margin="0,0,10,10" Padding="6" ToolTip="Open the original photo">
+                                            CommandParameter="{Binding}" Margin="0,0,10,10" Padding="6" ToolTip="Open in the inspector: zoom, compare and mark defects">
                                         <StackPanel Width="160">
                                             <Image Source="{Binding Thumbnail, IsAsync=True}" Height="200" Stretch="Uniform" />
                                             <TextBlock Text="{Binding Caption}" FontWeight="SemiBold" Margin="0,6,0,0" />

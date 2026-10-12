@@ -34,3 +34,32 @@ public sealed class AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute
         }
     }
 }
+
+/// <summary>An async command that receives the CommandParameter from XAML, e.g. the clicked list item.</summary>
+public sealed class AsyncRelayCommand<T>(Func<T?, Task> execute) : ICommand
+{
+    private bool _isRunning;
+
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+
+    public bool CanExecute(object? parameter) => !_isRunning;
+
+    public async void Execute(object? parameter)
+    {
+        _isRunning = true;
+        CommandManager.InvalidateRequerySuggested();
+        try
+        {
+            await execute(parameter is T t ? t : default);
+        }
+        finally
+        {
+            _isRunning = false;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+}

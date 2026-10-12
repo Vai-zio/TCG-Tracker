@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -79,7 +78,9 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
         BackCommand = new AsyncRelayCommand(() => _navigation.NavigateToAsync<CollectionViewModel>());
         DeleteCommand = new AsyncRelayCommand(DeleteAsync, () => IsExisting);
         AddPhotosCommand = new AsyncRelayCommand(AddPhotosAsync, () => IsExisting);
-        OpenPhotoCommand = new RelayCommand<CardImageViewModel>(OpenPhoto);
+        OpenPhotoCommand = new AsyncRelayCommand<CardImageViewModel>(OpenPhotoAsync);
+        InspectCommand = new AsyncRelayCommand(() => _navigation.NavigateToAsync<InspectionViewModel>(new InspectionTarget(_cardId!.Value)),
+            () => IsExisting);
     }
 
     // Choices for the drop-downs
@@ -143,6 +144,7 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
     public AsyncRelayCommand DeleteCommand { get; }
     public AsyncRelayCommand AddPhotosCommand { get; }
     public ICommand OpenPhotoCommand { get; }
+    public AsyncRelayCommand InspectCommand { get; }
 
     /// <summary>Parameter: the card's id to edit, or null for a new card.</summary>
     public async Task OnNavigatedToAsync(object? parameter)
@@ -318,12 +320,10 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
             Photos.Add(new CardImageViewModel(image, _images.GetFullPath(image.StorageKey)));
     }
 
-    private void OpenPhoto(CardImageViewModel? photo)
-    {
-        if (photo is null) return;
-        // Opens the original in the default Windows viewer. An in-app viewer comes in Milestone 3.
-        Process.Start(new ProcessStartInfo(photo.FullPath) { UseShellExecute = true });
-    }
+    /// <summary>Opens the photo in the inspection workspace (zoom, pan, compare, mark defects).</summary>
+    private Task OpenPhotoAsync(CardImageViewModel? photo) => photo is null || _cardId is not { } id
+        ? Task.CompletedTask
+        : _navigation.NavigateToAsync<InspectionViewModel>(new InspectionTarget(id, photo.Info.Id));
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
     {

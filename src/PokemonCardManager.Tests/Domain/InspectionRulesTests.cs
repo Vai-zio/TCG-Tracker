@@ -148,3 +148,15 @@ public class InspectionInputValidatorTests
         Assert.True(_validator.Validate(Valid with { Defects = [defect with { Box = new(0.1, 0.1, 0.1, 0.1) }] }).IsValid);
     }
 }
+
+public class DefectRegionGuessTests
+{
+    [Theory]
+    [InlineData(0.01, 0.01, CardRegion.TopLeftCorner)]
+    [InlineData(0.90, 0.92, CardRegion.BottomRightCorner)]
+    [InlineData(0.45, 0.02, CardRegion.TopEdge)]
+    [InlineData(0.02, 0.50, CardRegion.LeftEdge)]
+    [InlineData(0.45, 0.45, CardRegion.Surface)]
+    public void Box_position_suggests_a_region(double x, double y, CardRegion expected) =>
+        Assert.Equal(expected, DefectRegions.Guess(new NormalizedBox(x, y, 0.05, 0.05)));
+}
