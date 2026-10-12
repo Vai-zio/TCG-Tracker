@@ -1,0 +1,59 @@
+<UserControl x:Class="PokemonCardManager.App.Views.StorageLocationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.InputBindings>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewCommand}" />
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+    </UserControl.InputBindings>
+
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top">
+            <Button DockPanel.Dock="Right" Content="_New location (Ctrl+N)" Command="{Binding NewCommand}"
+                    Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Top" />
+            <TextBlock Text="Storage locations" Style="{StaticResource PageTitleStyle}" />
+        </DockPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="340" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid ItemsSource="{Binding Locations}" SelectedItem="{Binding Selected}" Margin="0,0,16,0"
+                      AutomationProperties.Name="Storage locations">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Location" Binding="{Binding Path}" Width="3*" />
+                    <DataGridTextColumn Header="Type" Binding="{Binding Type, Converter={StaticResource EnumToText}}" Width="*" />
+                    <DataGridTextColumn Header="Cards here" Binding="{Binding CardCount}" Width="90" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Column="1" Style="{StaticResource GlassPanelStyle}" VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="{Binding FormTitle}" Style="{StaticResource SectionTitleStyle}" />
+
+                    <Label Content="_Name *" Target="{Binding ElementName=NameBox}" Style="{StaticResource FieldLabelStyle}" />
+                    <TextBox x:Name="NameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" />
+
+                    <Label Content="_Type" Target="{Binding ElementName=TypeBox}" Style="{StaticResource FieldLabelStyle}" />
+                    <ComboBox x:Name="TypeBox" ItemsSource="{Binding Types}" SelectedItem="{Binding Type}" DisplayMemberPath="Label" Margin="0,0,0,10" />
+
+                    <Label Content="_Inside" Target="{Binding ElementName=ParentBox}" Style="{StaticResource FieldLabelStyle}" />
+                    <ComboBox x:Name="ParentBox" ItemsSource="{Binding ParentOptions}" SelectedItem="{Binding Parent}" DisplayMemberPath="Label" Margin="0,0,0,10" />
+
+                    <Label Content="N_otes" Target="{Binding ElementName=NotesBox}" Style="{StaticResource FieldLabelStyle}" />
+                    <TextBox x:Name="NotesBox" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True"
+                             TextWrapping="Wrap" MinHeight="50" VerticalContentAlignment="Top" Margin="0,0,0,10" />
+
+                    <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorTextStyle}" Margin="0,0,0,10"
+                               Visibility="{Binding Error, Converter={StaticResource NotEmptyToVisibility}}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                        <Button Content="_Save (Ctrl+S)" Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

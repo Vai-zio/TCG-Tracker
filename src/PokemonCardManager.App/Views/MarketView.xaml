@@ -1,0 +1,340 @@
+<UserControl x:Class="PokemonCardManager.App.Views.MarketView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top">
+            <Border DockPanel.Dock="Right" Style="{StaticResource SegmentTrackStyle}" VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Style="{StaticResource SegmentStyle}" GroupName="MarketTab" IsChecked="{Binding IsCardMode}" Content="Card prices" />
+                    <RadioButton Style="{StaticResource SegmentStyle}" GroupName="MarketTab" IsChecked="{Binding IsRatesMode}" Content="Exchange rates" />
+                    <RadioButton Style="{StaticResource SegmentStyle}" GroupName="MarketTab" IsChecked="{Binding IsImportMode}" Content="Import CSV" />
+                </StackPanel>
+            </Border>
+            <TextBlock Text="Market &amp; profitability" Style="{StaticResource PageTitleStyle}" />
+        </DockPanel>
+
+        <Grid>
+            <!-- ============ Card prices ============ -->
+            <Grid Visibility="{Binding IsCardMode, Converter={StaticResource BoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <DockPanel Margin="0,0,16,0">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="Search" Command="{Binding SearchCommand}" Margin="8,0,0,0" />
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Search cards"
+                                 ToolTip="Name, set or number">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </DockPanel>
+                    <ListBox ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" AutomationProperties.Name="Cards"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="2,4">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding SetName, Mode=OneWay}" /> <Run Text="{Binding CollectorNumber, Mode=OneWay}" />
+                                        · <Run Text="{Binding Language, Mode=OneWay}" /> · <Run Text="{Binding Finish, Mode=OneWay, Converter={StaticResource EnumToText}}" />
+                                        · <Run Text="{Binding PriceCount, Mode=OneWay}" /> price(s)
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <TextBlock Grid.Column="1" Style="{StaticResource MutedTextStyle}" Margin="0,40,0,0" HorizontalAlignment="Center"
+                           Text="Pick a card on the left to see and add its prices."
+                           Visibility="{Binding HasCard, Converter={StaticResource InverseBoolToVisibility}}" />
+
+                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                              Visibility="{Binding HasCard, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <!-- Summary -->
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Label Content="Show in" Target="{Binding ElementName=CurrencyBox}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center" />
+                                        <TextBox x:Name="CurrencyBox" Width="60" Text="{Binding Currency, UpdateSourceTrigger=LostFocus}" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding SelectedCard.Display}" Style="{StaticResource SectionTitleStyle}" TextWrapping="Wrap" />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Median (25th–75th percentile) · how many · newest. Completed sales, asking prices and estimates are kept apart: an asking price is not what a card sold for." />
+                                <DataGrid ItemsSource="{Binding Groups}" IsReadOnly="True" AutomationProperties.Name="Price summary" MaxHeight="260">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="80" />
+                                        <DataGridTextColumn Header="Completed sales" Binding="{Binding Sales}" Width="*" />
+                                        <DataGridTextColumn Header="Asking prices" Binding="{Binding Asking}" Width="*" />
+                                        <DataGridTextColumn Header="Estimates" Binding="{Binding Estimates}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <TextBlock Text="{Binding OverviewNote}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Visibility="{Binding OverviewNote, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <DockPanel Margin="0,10,0,0">
+                                    <Button DockPanel.Dock="Left" Content="Fetch online estimates" Command="{Binding RefreshOnlineCommand}" Margin="0,0,10,0" />
+                                    <TextBlock Text="{Binding RefreshStatus}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                </DockPanel>
+                                <TextBlock Text="{Binding ProvidersText}" Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Add price -->
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Add a price" Style="{StaticResource SectionTitleStyle}" />
+                                <WrapPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Type" Target="{Binding ElementName=TypeBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <ComboBox x:Name="TypeBox" Width="150" ItemsSource="{Binding Types}" SelectedItem="{Binding NewType}" DisplayMemberPath="Label" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="T_ier" Target="{Binding ElementName=TierBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <ComboBox x:Name="TierBox" Width="140" ItemsSource="{Binding TierOptions}" SelectedItem="{Binding NewTier}" DisplayMemberPath="Label" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8" Visibility="{Binding IsGradedTier, Converter={StaticResource BoolToVisibility}}">
+                                        <Label Content="_Grade" Target="{Binding ElementName=GradeBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <TextBox x:Name="GradeBox" Width="60" Text="{Binding NewGrade, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Price" Target="{Binding ElementName=PriceBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <TextBox x:Name="PriceBox" Width="100" Text="{Binding NewPrice, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Currency" Target="{Binding ElementName=NewCurrencyBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <TextBox x:Name="NewCurrencyBox" Width="60" Text="{Binding NewCurrency, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Date" Target="{Binding ElementName=DateBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <DatePicker x:Name="DateBox" Width="140" SelectedDate="{Binding NewDate}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Source" Target="{Binding ElementName=SourceBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <TextBox x:Name="SourceBox" Width="120" Text="{Binding NewSource, UpdateSourceTrigger=PropertyChanged}" ToolTip="e.g. eBay, Cardmarket, a shop" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Link or reference" Target="{Binding ElementName=RefBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <TextBox x:Name="RefBox" Width="200" Text="{Binding NewReference, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Quality" Target="{Binding ElementName=QualityBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <ComboBox x:Name="QualityBox" Width="110" ItemsSource="{Binding Qualities}" SelectedItem="{Binding NewQuality}" DisplayMemberPath="Label"
+                                                  ToolTip="How much you trust this price" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,10,8">
+                                        <Label Content="_Notes" Target="{Binding ElementName=PriceNotesBox}" Style="{StaticResource FieldLabelStyle}" />
+                                        <TextBox x:Name="PriceNotesBox" Width="200" Text="{Binding NewNotes, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                </WrapPanel>
+                                <TextBlock Text="{Binding PriceError}" Style="{StaticResource ErrorTextStyle}" Margin="0,0,0,8"
+                                           Visibility="{Binding PriceError, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <Button Content="_Add price" Command="{Binding AddPriceCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- History -->
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Price history" Style="{StaticResource SectionTitleStyle}" />
+                                <DataGrid ItemsSource="{Binding Observations}" IsReadOnly="True" AutomationProperties.Name="Price history" MaxHeight="320">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=yyyy-MM-dd}" Width="90" />
+                                        <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="70" />
+                                        <DataGridTextColumn Header="Type" Binding="{Binding Type, Converter={StaticResource EnumToText}}" Width="110" />
+                                        <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="100" />
+                                        <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*" />
+                                        <DataGridTextColumn Header="Reference" Binding="{Binding SourceReference}" Width="*" />
+                                        <DataGridTextColumn Header="Quality" Binding="{Binding Quality, Converter={StaticResource EnumToText}}" Width="70" />
+                                        <DataGridTemplateColumn Header="" Width="70">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Delete" Padding="6,2"
+                                                            Command="{Binding DataContext.DeletePriceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Grading profit -->
+                        <Border Style="{StaticResource GlassPanelStyle}" DataContext="{Binding Calculator}">
+                            <StackPanel>
+                                <TextBlock Text="Should I grade it?" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Compares selling graded with selling raw, after all fees, in one currency. Low/high are optional (they default to the base price). Grade chances are your own guess; leave them empty and no expected value is shown." />
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
+                                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <ComboBox Width="90" ItemsSource="{Binding CompanyOptions}" SelectedItem="{Binding CalcCompany}" DisplayMemberPath="Label"
+                                              AutomationProperties.Name="Grading company" Margin="0,0,8,0" />
+                                    <Button Content="Fill prices from history" Command="{Binding FillCalculatorCommand}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding FillNote}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Visibility="{Binding FillNote, Converter={StaticResource NotEmptyToVisibility}}" />
+
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Price" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Grid.Column="1" Text="Low" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Grid.Column="2" Text="Base *" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Grid.Column="3" Text="High" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Grid.Column="4" Text="Chance %" Style="{StaticResource MutedTextStyle}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Raw" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Text="{Binding RawLow, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" AutomationProperties.Name="Raw low" />
+                                    <TextBox Grid.Column="2" Text="{Binding RawBase, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" AutomationProperties.Name="Raw base" />
+                                    <TextBox Grid.Column="3" Text="{Binding RawHigh, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" AutomationProperties.Name="Raw high" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding Grades}" Focusable="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="90" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" /><ColumnDefinition Width="100" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center"><Run Text="Grade " /><Run Text="{Binding Label, Mode=OneWay}" /></TextBlock>
+                                                <TextBox Grid.Column="1" Text="{Binding Low, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
+                                                <TextBox Grid.Column="2" Text="{Binding Base, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
+                                                <TextBox Grid.Column="3" Text="{Binding High, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
+                                                <TextBox Grid.Column="4" Text="{Binding ProbabilityPercent, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <WrapPanel Margin="0,8,0,0">
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Grading fee *" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding GradingFee, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Shipping there" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding ShippingTo, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Return shipping" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding ReturnShipping, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Insurance" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding Insurance, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Other" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding Other, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Selling fee %" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding SellingFeePercent, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Fixed selling fee" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding SellingFixedFee, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,8"><Label Content="Postage to buyer" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding SellingShipping, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                </WrapPanel>
+                                <Button Content="_Calculate" Command="{Binding CalculateCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,10" />
+
+                                <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorTextStyle}" TextWrapping="Wrap"
+                                           Visibility="{Binding Error, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Visibility="{Binding Summary, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <DataGrid ItemsSource="{Binding Results}" IsReadOnly="True" AutomationProperties.Name="Grading profit"
+                                          Visibility="{Binding Summary, Converter={StaticResource NotEmptyToVisibility}}" Margin="0,0,0,8">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Grade" Binding="{Binding Tier}" Width="80" />
+                                        <DataGridTextColumn Header="Net after all costs" Binding="{Binding NetBase}" Width="*" />
+                                        <DataGridTextColumn Header="vs raw: low" Binding="{Binding ProfitLow}" Width="*" />
+                                        <DataGridTextColumn Header="vs raw: base" Binding="{Binding ProfitBase}" Width="*" />
+                                        <DataGridTextColumn Header="vs raw: high" Binding="{Binding ProfitHigh}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <TextBlock Text="{Binding ExpectedNote}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Visibility="{Binding ExpectedNote, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <TextBlock Text="If graded prices moved (base scenario)" Style="{StaticResource MutedTextStyle}"
+                                           Visibility="{Binding Summary, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <DataGrid ItemsSource="{Binding Sensitivity}" IsReadOnly="True" AutomationProperties.Name="Sensitivity" AutoGenerateColumns="False"
+                                          Visibility="{Binding Summary, Converter={StaticResource NotEmptyToVisibility}}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Graded prices" Binding="{Binding PriceChangePercent, StringFormat={}{0:+0;-0;0}%}" Width="110" />
+                                        <DataGridTextColumn Header="Lowest grade that pays" Binding="{Binding BreakEvenGrade, TargetNullValue=none}" Width="*" />
+                                        <DataGridTextColumn Header="Expected extra profit" Binding="{Binding ExpectedProfit, TargetNullValue=–}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- ============ Exchange rates ============ -->
+            <Grid Visibility="{Binding IsRatesMode, Converter={StaticResource BoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+                <DataGrid ItemsSource="{Binding Rates}" IsReadOnly="True" Margin="0,0,16,0" AutomationProperties.Name="Exchange rates">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date" Binding="{Binding AsOf, StringFormat=yyyy-MM-dd}" Width="100" />
+                        <DataGridTextColumn Header="From" Binding="{Binding FromCurrency}" Width="70" />
+                        <DataGridTextColumn Header="To" Binding="{Binding ToCurrency}" Width="70" />
+                        <DataGridTextColumn Header="1 From =" Binding="{Binding Rate}" Width="*" />
+                        <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*" />
+                        <DataGridTemplateColumn Header="" Width="70">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Delete" Padding="6,2"
+                                            Command="{Binding DataContext.DeleteRateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Border Grid.Column="1" Style="{StaticResource GlassPanelStyle}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Record a rate" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Prices in other currencies are only converted with rates you record here, using the one closest to each price's date. Nothing is fetched or guessed." />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <StackPanel Margin="0,0,10,0"><Label Content="_From" Target="{Binding ElementName=FromBox}" Style="{StaticResource FieldLabelStyle}" /><TextBox x:Name="FromBox" Width="60" Text="{Binding RateFrom, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                            <StackPanel Margin="0,0,10,0"><Label Content="_To" Target="{Binding ElementName=ToBox}" Style="{StaticResource FieldLabelStyle}" /><TextBox x:Name="ToBox" Width="60" Text="{Binding RateTo, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                            <StackPanel><Label Content="_Rate" Target="{Binding ElementName=RateBox}" Style="{StaticResource FieldLabelStyle}" /><TextBox x:Name="RateBox" Width="100" Text="{Binding RateValue, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        </StackPanel>
+                        <Label Content="_Date" Target="{Binding ElementName=RateDateBox}" Style="{StaticResource FieldLabelStyle}" />
+                        <DatePicker x:Name="RateDateBox" SelectedDate="{Binding RateDate}" Margin="0,0,0,10" />
+                        <Label Content="_Source" Target="{Binding ElementName=RateSourceBox}" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="RateSourceBox" Text="{Binding RateSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"
+                                 ToolTip="e.g. Danmarks Nationalbank, your bank" />
+                        <TextBlock Text="{Binding RateError}" Style="{StaticResource ErrorTextStyle}" TextWrapping="Wrap" Margin="0,0,0,10"
+                                   Visibility="{Binding RateError, Converter={StaticResource NotEmptyToVisibility}}" />
+                        <Button Content="Add _rate" Command="{Binding AddRateCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Right" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ============ CSV import ============ -->
+            <DockPanel Visibility="{Binding IsImportMode, Converter={StaticResource BoolToVisibility}}">
+                <Border DockPanel.Dock="Top" Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Import prices from a CSV file" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap"
+                                   Text="Columns (first line). Required: Set, Number, Price, Currency, Type, Date. Optional: Name, Language, Company, Grade, Source, Reference, Quality, Notes. Type is sale, asking or estimate on every line. Dates are 2026-03-31 or 31-03-2026. Comma or semicolon separated; 12.50 and 12,50 both work. Cards must already be in your catalog." />
+                        <TextBox Text="{Binding CsvTemplate, Mode=OneWay}" IsReadOnly="True" Margin="0,8,0,8" FontFamily="Consolas" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Choose file…" Command="{Binding PickCsvCommand}" Margin="0,0,8,0" />
+                            <Button Content="_Import valid lines" Command="{Binding ImportCommand}" Style="{StaticResource AccentButtonStyle}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding ImportStatus}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Visibility="{Binding ImportStatus, Converter={StaticResource NotEmptyToVisibility}}" />
+                    </StackPanel>
+                </Border>
+                <DataGrid ItemsSource="{Binding PreviewRows}" IsReadOnly="True" AutomationProperties.Name="Import preview">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Line" Binding="{Binding Row.LineNumber}" Width="50" />
+                        <DataGridTextColumn Header="Card" Binding="{Binding MatchedCard, TargetNullValue=–}" Width="2*" />
+                        <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="70" />
+                        <DataGridTextColumn Header="Price" Binding="{Binding Row.Price}" Width="80" />
+                        <DataGridTextColumn Header="Cur." Binding="{Binding Row.Currency}" Width="50" />
+                        <DataGridTextColumn Header="Type" Binding="{Binding Row.Type, Converter={StaticResource EnumToText}}" Width="110" />
+                        <DataGridTextColumn Header="Date" Binding="{Binding Row.Date, StringFormat=yyyy-MM-dd}" Width="90" />
+                        <DataGridTextColumn Header="Problems" Binding="{Binding Problems}" Width="3*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

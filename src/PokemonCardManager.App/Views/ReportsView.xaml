@@ -1,0 +1,116 @@
+<UserControl x:Class="PokemonCardManager.App.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                <Label Content="_Currency" Target="{Binding ElementName=RepCurrency}" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Center" />
+                <TextBox x:Name="RepCurrency" Width="60" Text="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" Margin="6,0,8,0" />
+                <Button Content="_Refresh" Command="{Binding RefreshCommand}" />
+            </StackPanel>
+            <TextBlock Text="Reports" Style="{StaticResource PageTitleStyle}" />
+        </DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="{Binding ExportStatus}" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,8"
+                   Visibility="{Binding ExportStatus, Converter={StaticResource NotEmptyToVisibility}}" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+            <StackPanel>
+                <!-- Collection value -->
+                <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Export CSV" Command="{Binding ExportValueCommand}" VerticalAlignment="Top" />
+                            <TextBlock Text="Collection value" Style="{StaticResource SectionTitleStyle}" />
+                        </DockPanel>
+                        <TextBlock Text="{Binding ValueTotal}" Style="{StaticResource TileValueStyle}" />
+                        <TextBlock Text="{Binding ValueSplit}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Text="Median of recorded completed sales for each card's tier (raw, or the grade it came back with). Estimates are used only when there are no sales; asking prices never." />
+                        <TextBlock Text="{Binding ValueWarnings}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,6,0,8"
+                                   Visibility="{Binding ValueWarnings, Converter={StaticResource NotEmptyToVisibility}}" />
+                        <DataGrid ItemsSource="{Binding ValueRows}" IsReadOnly="True" MaxHeight="320" AutomationProperties.Name="Card values">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Card" Binding="{Binding Card}" Width="2*" />
+                                <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="70" />
+                                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="110" />
+                                <DataGridTextColumn Header="Basis" Binding="{Binding Basis, Converter={StaticResource EnumToText}}" Width="120" />
+                                <DataGridTextColumn Header="Prices" Binding="{Binding PriceCount}" Width="60" />
+                                <DataGridTextColumn Header="Newest" Binding="{Binding Newest, StringFormat=yyyy-MM-dd}" Width="90" />
+                                <DataGridCheckBoxColumn Header="Stale" Binding="{Binding IsStale}" Width="50" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Prediction accuracy -->
+                <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Export CSV" Command="{Binding ExportAccuracyCommand}" VerticalAlignment="Top" />
+                            <TextBlock Text="Predictions vs real grades" Style="{StaticResource SectionTitleStyle}" />
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                   Text="The rules only give the best grade still possible, so this checks whether that limit held (real grade at or below it). Headroom is how far below the limit cards came back. Each assessment version gets its own line." />
+                        <TextBlock Text="{Binding AccuracyNote}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <DataGrid ItemsSource="{Binding AccuracyByVersion}" IsReadOnly="True" AutomationProperties.Name="Accuracy by version" Margin="0,0,0,8">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Assessment version" Binding="{Binding AssessmentVersion}" Width="2*" />
+                                <DataGridTextColumn Header="Compared" Binding="{Binding Compared}" Width="80" />
+                                <DataGridTextColumn Header="Limit held" Binding="{Binding UpperLimitHeld}" Width="80" />
+                                <DataGridTextColumn Header="Held %" Binding="{Binding UpperLimitHeldShare, StringFormat=P0}" Width="70" />
+                                <DataGridTextColumn Header="Avg. headroom" Binding="{Binding MeanHeadroom, StringFormat=0.##}" Width="100" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid ItemsSource="{Binding AccuracyPairs}" IsReadOnly="True" MaxHeight="260" AutomationProperties.Name="Compared cards">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Card" Binding="{Binding Card}" Width="2*" />
+                                <DataGridTextColumn Header="Company" Binding="{Binding CompanyCode}" Width="70" />
+                                <DataGridTextColumn Header="Predicted at most" Binding="{Binding PredictedHigh, StringFormat=0.#}" Width="120" />
+                                <DataGridTextColumn Header="Real grade" Binding="{Binding ReturnedGrade, StringFormat=0.#}" Width="80" />
+                                <DataGridCheckBoxColumn Header="Limit held" Binding="{Binding WithinUpperLimit, Mode=OneWay}" Width="80" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Grades -->
+                    <Border Style="{StaticResource GlassPanelStyle}" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="Grades received" Style="{StaticResource SectionTitleStyle}" />
+                            <DataGrid ItemsSource="{Binding Grades}" IsReadOnly="True" AutomationProperties.Name="Grades received">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Company" Binding="{Binding CompanyCode}" Width="*" />
+                                    <DataGridTextColumn Header="Grade" Binding="{Binding Grade, StringFormat=0.#}" Width="*" />
+                                    <DataGridTextColumn Header="Cards" Binding="{Binding Count}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                    <!-- Costs -->
+                    <Border Grid.Column="2" Style="{StaticResource GlassPanelStyle}" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="Submission costs" Style="{StaticResource SectionTitleStyle}" />
+                            <DataGrid ItemsSource="{Binding Costs}" IsReadOnly="True" AutomationProperties.Name="Submission costs">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Submission" Binding="{Binding Title}" Width="2*" />
+                                    <DataGridTextColumn Header="Sent" Binding="{Binding SubmittedOn, StringFormat=yyyy-MM-dd}" Width="90" />
+                                    <DataGridTextColumn Header="Cards" Binding="{Binding Cards}" Width="55" />
+                                    <DataGridTextColumn Header="Total" Binding="{Binding TotalCost}" Width="*" />
+                                    <DataGridTextColumn Header="Per card" Binding="{Binding CostPerCard}" Width="*" />
+                                    <DataGridCheckBoxColumn Header="Invoiced" Binding="{Binding CostIsFinal, Mode=OneWay}" Width="65" />
+                                    <DataGridTextColumn Header="Avg. grade" Binding="{Binding AverageGrade, StringFormat=0.##}" Width="75" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,351 @@
+<UserControl x:Class="PokemonCardManager.App.Views.InspectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PokemonCardManager.App.Controls"
+             xmlns:vm="clr-namespace:PokemonCardManager.App.ViewModels">
+    <UserControl.InputBindings>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding ZoomInCommand}" />
+        <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ZoomInCommand}" />
+        <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding ZoomOutCommand}" />
+        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ZoomOutCommand}" />
+        <KeyBinding Key="D0" Modifiers="Control" Command="{Binding FitCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding BackCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <!-- ===== No card chosen: cards waiting for inspection ===== -->
+        <DockPanel Visibility="{Binding HasCard, Converter={StaticResource InverseBoolToVisibility}}">
+            <TextBlock DockPanel.Dock="Top" Text="Inspection" Style="{StaticResource PageTitleStyle}" />
+            <TextBlock DockPanel.Dock="Top" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,0,0,16"
+                       Text="Pick a card waiting for inspection, or open any card from the Collection and choose Inspect." />
+            <Border Style="{StaticResource GlassPanelStyle}" VerticalAlignment="Top">
+                <Grid>
+                    <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                               Visibility="{Binding QueueIsEmpty, Converter={StaticResource BoolToVisibility}}"
+                               Text="No cards are waiting. Set a card's status to &quot;Awaiting inspection&quot; to queue it here." />
+                    <ItemsControl ItemsSource="{Binding Queue}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.OpenQueueItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}" HorizontalContentAlignment="Left" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedTextStyle}" FontSize="11" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+        </DockPanel>
+
+        <!-- ===== Workspace ===== -->
+        <DockPanel Visibility="{Binding HasCard, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel DockPanel.Dock="Top">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Content="Back to card" Command="{Binding BackCommand}" Margin="0,0,8,0" />
+                    <Button Content="_Save inspection (Ctrl+S)" Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Inspect" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,2" />
+                    <TextBlock Text="{Binding CardTitle}" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,14" />
+                </StackPanel>
+            </DockPanel>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="380" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: photos and tools -->
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                               Visibility="{Binding HasPhotos, Converter={StaticResource InverseBoolToVisibility}}"
+                               Text="This card has no photos yet. Go back to the card and add front and back photos, plus close-ups of corners and edges." />
+
+                    <!-- Photo strip -->
+                    <ListBox DockPanel.Dock="Top" ItemsSource="{Binding Photos}" SelectedItem="{Binding SelectedPhoto}"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled" Background="Transparent" BorderThickness="0"
+                             Margin="0,0,0,8" AutomationProperties.Name="Photos">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Width="96" Margin="2" ToolTip="{Binding When}">
+                                    <Border Height="80" CornerRadius="8" Background="{DynamicResource InputBrush}" ClipToBounds="True">
+                                        <Image Source="{Binding Thumbnail, IsAsync=True}" Stretch="Uniform" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Caption}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Toolbar -->
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Border Style="{StaticResource SegmentTrackStyle}" Margin="0,0,12,6">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource SegmentStyle}" GroupName="Tool" IsChecked="{Binding IsLookMode}" Content="Look"
+                                             ToolTip="Drag to move around the photo, scroll to zoom" />
+                                <RadioButton Style="{StaticResource SegmentStyle}" GroupName="Tool" IsChecked="{Binding IsMarkMode}" Content="Mark defect"
+                                             ToolTip="Drag a box around a defect (right-drag still moves the photo)" />
+                                <RadioButton Style="{StaticResource SegmentStyle}" GroupName="Tool" IsChecked="{Binding IsCenteringMode}" Content="Centering"
+                                             ToolTip="Drag the guide lines to measure the borders" />
+                            </StackPanel>
+                        </Border>
+                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding ZoomOutCommand}" ToolTip="Zoom out (Ctrl+−)" Margin="0,0,4,6">
+                            <TextBlock Text="&#xE71F;" Style="{StaticResource IconTextStyle}" />
+                        </Button>
+                        <TextBlock Text="{Binding ZoomText}" VerticalAlignment="Center" MinWidth="44" TextAlignment="Center" Margin="0,0,4,6" />
+                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding ZoomInCommand}" ToolTip="Zoom in (Ctrl++)" Margin="0,0,4,6">
+                            <TextBlock Text="&#xE8A3;" Style="{StaticResource IconTextStyle}" />
+                        </Button>
+                        <Button Content="Fit" Command="{Binding FitCommand}" ToolTip="Fit the photo to the window (Ctrl+0)" Margin="0,0,4,6" />
+                        <Button Content="100%" Command="{Binding ActualSizeCommand}" ToolTip="One photo pixel per screen pixel" Margin="0,0,12,6" />
+                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding RotateLeftCommand}" ToolTip="Rotate left" Margin="0,0,4,6">
+                            <TextBlock Text="&#xE7AD;" Style="{StaticResource IconTextStyle}" RenderTransformOrigin="0.5,0.5">
+                                <TextBlock.RenderTransform>
+                                    <ScaleTransform ScaleX="-1" />
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Button>
+                        <Button Style="{StaticResource IconButtonStyle}" Command="{Binding RotateRightCommand}" ToolTip="Rotate right" Margin="0,0,12,6">
+                            <TextBlock Text="&#xE7AD;" Style="{StaticResource IconTextStyle}" />
+                        </Button>
+                        <CheckBox Content="Compare" IsChecked="{Binding IsComparing}" VerticalAlignment="Center" Margin="0,0,12,6"
+                                  ToolTip="Show another photo side by side: front and back, or before and after" />
+                        <Button Content="Check quality" Command="{Binding CheckQualityCommand}" Margin="0,0,0,6"
+                                ToolTip="Measure sharpness and exposure again" />
+                    </WrapPanel>
+
+                    <!-- Photo quality -->
+                    <Border DockPanel.Dock="Top" CornerRadius="10" Padding="12,8" Margin="0,0,0,8">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedPhoto.QualityRating}" Value="Good">
+                                        <Setter Property="Background" Value="{DynamicResource MintSoftBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedPhoto.QualityRating}" Value="Acceptable">
+                                        <Setter Property="Background" Value="{DynamicResource LemonSoftBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedPhoto.QualityRating}" Value="Inadequate">
+                                        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedPhoto}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock TextWrapping="Wrap">
+                            <Run Text="Photo quality:" FontWeight="SemiBold" />
+                            <Run Text="{Binding SelectedPhoto.QualityText, Mode=OneWay}" />
+                        </TextBlock>
+                    </Border>
+
+                    <!-- Centering help -->
+                    <Border DockPanel.Dock="Top" Style="{StaticResource GlassTileStyle}" Padding="12,8" Margin="0,0,0,8"
+                            Visibility="{Binding IsCenteringMode, Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Reset lines" Command="{Binding ResetGuidesCommand}" Margin="8,0,8,0" />
+                                <Button Content="Use this measurement" Command="{Binding UseCenteringCommand}" Style="{StaticResource AccentButtonStyle}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="{Binding CenteringText}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap"
+                                           Text="Blue lines: the card's outer edge. Pink lines: the inner edge of the printed border. Use a photo taken straight on; tilt skews the result." />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Viewer (and optional comparison) -->
+                    <UniformGrid Rows="1">
+                        <Border Style="{StaticResource GlassPanelStyle}" Padding="0" ClipToBounds="True" Margin="0,0,0,0">
+                            <ScrollViewer x:Name="Viewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                          Background="Transparent" Focusable="False"
+                                          PreviewMouseWheel="OnViewerMouseWheel"
+                                          PreviewMouseLeftButtonDown="OnViewerLeftDown" PreviewMouseRightButtonDown="OnViewerRightDown"
+                                          PreviewMouseMove="OnViewerMouseMove"
+                                          PreviewMouseLeftButtonUp="OnViewerButtonUp" PreviewMouseRightButtonUp="OnViewerButtonUp">
+                                <Grid x:Name="Stage" Margin="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid.LayoutTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}" />
+                                            <RotateTransform Angle="{Binding Rotation}" />
+                                        </TransformGroup>
+                                    </Grid.LayoutTransform>
+                                    <Image Source="{Binding SelectedPhoto.Full}" Stretch="Fill"
+                                           Width="{Binding SelectedPhoto.Info.Width}" Height="{Binding SelectedPhoto.Info.Height}"
+                                           RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="Photo" />
+                                    <controls:InspectionOverlay x:Name="Overlay" Mode="{Binding Mode}" Boxes="{Binding VisibleBoxes}"
+                                                                Guides="{Binding Guides}" BoxDrawnCommand="{Binding BoxDrawnCommand}" />
+                                </Grid>
+                            </ScrollViewer>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="12,0,0,0"
+                                Visibility="{Binding IsComparing, Converter={StaticResource BoolToVisibility}}">
+                            <DockPanel>
+                                <ComboBox DockPanel.Dock="Top" ItemsSource="{Binding Photos}" SelectedItem="{Binding ComparePhoto}"
+                                          DisplayMemberPath="Caption" Margin="0,0,0,8" AutomationProperties.Name="Compare with" />
+                                <TextBlock DockPanel.Dock="Top" Text="{Binding ComparePhoto.When}" Style="{StaticResource MutedTextStyle}"
+                                           FontSize="11" Margin="0,0,0,8" />
+                                <Image Source="{Binding ComparePhoto.Full}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                            </DockPanel>
+                        </Border>
+                    </UniformGrid>
+                </DockPanel>
+
+                <!-- Right: checklist, centering, defects, notes, history -->
+                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="What did you check?" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Unticked areas are saved as &quot;not inspected&quot;, not as &quot;no defects&quot;." />
+                                <CheckBox Content="Centering" IsChecked="{Binding InspectCentering}" Margin="0,0,0,6" />
+                                <CheckBox Content="Corners (all four, both sides)" IsChecked="{Binding InspectCorners}" Margin="0,0,0,6" />
+                                <CheckBox Content="Edges (all four, both sides)" IsChecked="{Binding InspectEdges}" Margin="0,0,0,6" />
+                                <CheckBox Content="Surface (front and back, angled light)" IsChecked="{Binding InspectSurface}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Centering" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock><Run Text="Front: " FontWeight="SemiBold" /><Run Text="{Binding FrontCenteringText, Mode=OneWay}" /></TextBlock>
+                                <TextBlock Margin="0,4,0,0"><Run Text="Back: " FontWeight="SemiBold" /><Run Text="{Binding BackCenteringText, Mode=OneWay}" /></TextBlock>
+                                <TextBlock Style="{StaticResource SubtleTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"
+                                           Text="Choose the Centering tool, line up the guides on a front or back photo, then use the measurement." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="Add without box" Command="{Binding AddDefectCommand}"
+                                            ToolTip="Record a defect you saw but can't mark on a photo" />
+                                    <TextBlock Text="Defects" Style="{StaticResource SectionTitleStyle}" />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,8"
+                                           Visibility="{Binding HasDefects, Converter={StaticResource InverseBoolToVisibility}}"
+                                           Text="Choose Mark defect and drag a box on the photo. Severity uses this app's own 0–5 scale, not a grading company's." />
+                                <ListBox ItemsSource="{Binding Defects}" SelectedItem="{Binding SelectedDefect}" Background="Transparent"
+                                         BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         VirtualizingPanel.IsVirtualizing="False" AutomationProperties.Name="Defects">
+                                    <!-- No inner scroll area, so the mouse wheel scrolls the whole side panel -->
+                                    <ListBox.Template>
+                                        <ControlTemplate TargetType="ListBox">
+                                            <ItemsPresenter />
+                                        </ControlTemplate>
+                                    </ListBox.Template>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,4">
+                                                <DockPanel Margin="0,0,0,6">
+                                                    <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" ToolTip="Remove"
+                                                            Command="{Binding DataContext.RemoveDefectCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                            CommandParameter="{Binding}">
+                                                        <TextBlock Text="&#xE74D;" Style="{StaticResource IconTextStyle}" />
+                                                    </Button>
+                                                    <TextBlock VerticalAlignment="Center">
+                                                        <Run Text="{Binding Number, Mode=OneWay}" FontWeight="Bold" />
+                                                        <Run Text="{Binding Where, Mode=OneWay}" Foreground="{DynamicResource MutedTextBrush}" />
+                                                    </TextBlock>
+                                                </DockPanel>
+                                                <ComboBox ItemsSource="{Binding Source={x:Static vm:DefectDraftViewModel.Types}}" SelectedItem="{Binding Type}"
+                                                          Margin="0,0,0,6" AutomationProperties.Name="Defect type" />
+                                                <ComboBox ItemsSource="{Binding Source={x:Static vm:DefectDraftViewModel.Severities}}" SelectedItem="{Binding Severity}"
+                                                          Margin="0,0,0,6" AutomationProperties.Name="Severity" />
+                                                <ComboBox ItemsSource="{Binding Source={x:Static vm:DefectDraftViewModel.Regions}}" SelectedItem="{Binding Region}"
+                                                          Margin="0,0,0,6" AutomationProperties.Name="Where on the card" />
+                                                <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Defect notes"
+                                                         ToolTip="Notes, e.g. only visible under angled light" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Notes" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+                                         MinHeight="70" VerticalContentAlignment="Top" AutomationProperties.Name="Inspection notes" />
+                                <Label Content="Inspected by" Style="{StaticResource FieldLabelStyle}" Margin="0,8,0,0" />
+                                <TextBox Text="{Binding Inspector, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Inspected by" />
+                                <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorTextStyle}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Visibility="{Binding Error, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <TextBlock Text="{Binding Status}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Visibility="{Binding Status, Converter={StaticResource NotEmptyToVisibility}}" />
+                                <TextBlock Style="{StaticResource SubtleTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Text="This records what you saw. It is not a grade. After saving, use Assess to check it against a grader's published limits." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Assessment" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Choose Assess on a saved inspection below. Limits come only from what the grader publishes (for PSA: centering tolerances), so you get the best grade still possible, never a predicted grade." />
+                                <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" AutomationProperties.Name="Assessment profile" />
+                                <TextBlock Text="{Binding AssessmentText}" TextWrapping="Wrap" FontSize="12" Margin="0,10,0,0"
+                                           Visibility="{Binding AssessmentText, Converter={StaticResource NotEmptyToVisibility}}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}">
+                            <StackPanel>
+                                <TextBlock Text="History" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                           Visibility="{Binding HistoryIsEmpty, Converter={StaticResource BoolToVisibility}}"
+                                           Text="No inspections yet. Saved inspections are kept forever; inspecting again adds a new one." />
+                                <ItemsControl ItemsSource="{Binding History}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource GlassTileStyle}" Padding="12" Margin="0,8,0,0">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap" />
+                                                    <Border Style="{StaticResource ChipStyle}" Background="{DynamicResource PeachSoftBrush}" Margin="0,6,0,0"
+                                                            Visibility="{Binding IsLimited, Converter={StaticResource BoolToVisibility}}"
+                                                            ToolTip="Some areas weren't inspected or a photo wasn't good enough">
+                                                        <TextBlock Text="Limited evidence" FontSize="11" Foreground="{DynamicResource PeachBrush}" />
+                                                    </Border>
+                                                    <DockPanel Margin="0,8,0,0">
+                                                        <CheckBox DockPanel.Dock="Left" Content="Details" IsChecked="{Binding IsExpanded}" VerticalAlignment="Center" />
+                                                        <Button DockPanel.Dock="Left" Content="Assess" Margin="8,0,0,0"
+                                                                Visibility="{Binding IsManual, Converter={StaticResource BoolToVisibility}}"
+                                                                Command="{Binding DataContext.AssessCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}" ToolTip="Run the rule-based assessment on this inspection" />
+                                                        <ComboBox ItemsSource="{Binding Source={x:Static vm:InspectionHistoryItemViewModel.Reviews}}"
+                                                                  SelectedItem="{Binding Review}" Width="160" HorizontalAlignment="Right"
+                                                                  ToolTip="Review status: the only thing you can change on a saved inspection" />
+                                                    </DockPanel>
+                                                    <TextBlock Text="{Binding Details}" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0"
+                                                               Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</UserControl>
