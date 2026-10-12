@@ -29,6 +29,9 @@ public sealed class TestEnvironment : IAsyncLifetime
     public IServiceProvider Services => _services ?? throw new InvalidOperationException("Not initialized.");
     public string DatabasePath => Path.Combine(_directory, "test.db");
 
+    /// <summary>A folder for test input files (outside the app's data folder).</summary>
+    public string ScratchDirectory => Directory.CreateDirectory(Path.Combine(_directory, "scratch")).FullName;
+
     public async Task InitializeAsync()
     {
         var configuration = new ConfigurationBuilder()
@@ -36,6 +39,7 @@ public sealed class TestEnvironment : IAsyncLifetime
             {
                 ["Storage:DataDirectory"] = _directory,
                 ["Storage:DatabaseFileName"] = "test.db",
+                ["Storage:MaxImageSizeMegabytes"] = "1",
             })
             .Build();
 

@@ -11,10 +11,16 @@ public sealed class StorageOptions
     public string DataDirectory { get; set; } = "";
     public string DatabaseFileName { get; set; } = "collection.db";
 
+    /// <summary>Largest photo accepted for import, in megabytes.</summary>
+    public int MaxImageSizeMegabytes { get; set; } = 100;
+
     public string ResolveDataDirectory() =>
         Path.GetFullPath(string.IsNullOrWhiteSpace(DataDirectory)
             ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PokemonCardManager")
             : Environment.ExpandEnvironmentVariables(DataDirectory));
+
+    /// <summary>Photos live in an "images" folder next to the database.</summary>
+    public string ResolveImagesDirectory() => Path.Combine(ResolveDataDirectory(), "images");
 
     public string ResolveDatabasePath()
     {
