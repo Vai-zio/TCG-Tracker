@@ -27,14 +27,15 @@ Encryption for TCG Tracker, ported from `Cryptography.py` to C# (`System.Securit
 - New blobs start with a version byte (and strings with `v1:`) so the format can change later without breaking old data.
 - `PasswordCrypto.DecryptLegacyPythonString` reads strings made by the original `Cryptography.py` (salt + nonce + ciphertext, 200k rounds).
 
-## Wiring it up (DI)
+## How the app uses it
 
-```csharp
-services.AddSingleton<IKeyVault>(_ => new FileKeyVault(Path.Combine(appDataFolder, "vault.key")));
-services.AddSingleton<IEncryptionService, AesGcmEncryptionService>();
-```
+`App.xaml.cs` registers `FileKeyVault` (file: `vault.key` in the data folder) and `AesGcmEncryptionService`, then shows `UnlockWindow` before the main window:
 
-At startup: `Exists` false → ask for a new master password and `CreateAsync`; otherwise `TryUnlockAsync`. Forgetting the master password means the encrypted data cannot be recovered.
+- **First run** (`Exists` is false): the user picks a master password (rules in `MasterPasswordRules`, at least 8 characters, typed twice) and `CreateAsync` makes the data key.
+- **Every later start:** `TryUnlockAsync` derives the key from the password and unwraps the data key. A wrong password just shows an error.
+- The data key stays in memory until the app closes; the host disposes the vault on exit, which wipes it. Closing the lock screen quits the app.
+
+Forgetting the master password means the encrypted data cannot be recovered. Keep `vault.key` with your backups: encrypted backups can't be opened without it.
 
 ## Tests
 
