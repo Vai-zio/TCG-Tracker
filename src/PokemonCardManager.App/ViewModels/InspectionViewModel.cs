@@ -52,7 +52,7 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
         NavigationService navigation, IAssessmentService assessments)
     {
         _assessments = assessments;
-        Profiles = [.. assessments.Profiles.Select(p => new Option<string?>($"{p.CompanyCode} limits ({p.Source})", p.Id)),
+        Profiles = [.. assessments.Profiles.Select(p => new Option<string?>($"{p.CompanyCode} limits ({p.CompanyName})", p.Id)),
             new Option<string?>("Description only (no grade limits)", null)];
         _profile = Profiles[0];
         AssessCommand = new AsyncRelayCommand<InspectionHistoryItemViewModel>(AssessAsync);

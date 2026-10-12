@@ -1,7 +1,7 @@
 using System.Globalization;
-using System.Text;
 using PokemonCardManager.Core.Common;
 using PokemonCardManager.Core.Market;
+using PokemonCardManager.Core.Reports;
 
 namespace PokemonCardManager.Core.Valuation;
 
@@ -37,37 +37,9 @@ public static class PriceCsv
     public static readonly string[] OptionalColumns = ["Name", "Language", "Company", "Grade", "Source", "Reference", "Quality", "Notes"];
     public const string Template = "Set,Number,Name,Language,Company,Grade,Price,Currency,Type,Date,Source,Reference,Quality,Notes";
 
-    private static readonly string[] DateFormats = ["yyyy-MM-dd", "yyyy-M-d", "d-M-yyyy", "d.M.yyyy", "d/M/yyyy"];
-
     /// <summary>Parses all lines. Header problems throw <see cref="FormatException"/>; line problems go in each row's Errors.</summary>
-    public static IReadOnlyList<PriceCsvRow> Parse(string text)
-    {
-        var lines = SplitRecords(text).ToList();
-        if (lines.Count == 0) throw new FormatException("The file is empty.");
-
-        var delimiter = lines[0].Text.Count(c => c == ';') > lines[0].Text.Count(c => c == ',') ? ';' : ',';
-        var header = SplitFields(lines[0].Text, delimiter).Select(h => h.Trim()).ToList();
-        var index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < header.Count; i++)
-        {
-            if (!RequiredColumns.Concat(OptionalColumns).Contains(header[i], StringComparer.OrdinalIgnoreCase))
-                throw new FormatException($"Unknown column '{header[i]}'. Expected: {Template}");
-            if (!index.TryAdd(header[i], i)) throw new FormatException($"Column '{header[i]}' appears twice.");
-        }
-        var missing = RequiredColumns.Where(c => !index.ContainsKey(c)).ToList();
-        if (missing.Count > 0) throw new FormatException($"Missing column(s): {string.Join(", ", missing)}.");
-
-        var rows = new List<PriceCsvRow>();
-        foreach (var (lineNumber, line) in lines.Skip(1))
-        {
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            var fields = SplitFields(line, delimiter);
-            string? Get(string column) =>
-                index.TryGetValue(column, out var i) && i < fields.Count && fields[i].Trim() is { Length: > 0 } v ? v : null;
-            rows.Add(ParseRow(lineNumber, Get));
-        }
-        return rows;
-    }
+    public static IReadOnlyList<PriceCsvRow> Parse(string text) =>
+        CsvReader.Read(text, RequiredColumns, OptionalColumns, Template).Select(l => ParseRow(l.LineNumber, l.Get)).ToList();
 
     private static PriceCsvRow ParseRow(int line, Func<string, string?> get)
     {
@@ -88,7 +60,7 @@ public static class PriceCsv
         var type = ParseType(get("Type"));
         if (type is null) errors.Add($"Type '{get("Type")}' must be sale, asking or estimate.");
 
-        DateOnly? date = DateOnly.TryParseExact(get("Date") ?? "", DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
+        var date = CsvReader.ParseDate(get("Date"));
         if (date is null) errors.Add($"Date '{get("Date")}' must look like 2026-03-31 or 31-03-2026.");
 
         var company = get("Company")?.ToUpperInvariant();
@@ -123,54 +95,6 @@ public static class PriceCsv
         if (t.Contains(',') && t.Contains('.')) return null;
         t = t.Replace(',', '.');
         return decimal.TryParse(t, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var v) ? v : null;
-    }
-
-    /// <summary>Splits into records, keeping line breaks that are inside quotes.</summary>
-    private static IEnumerable<(int Line, string Text)> SplitRecords(string text)
-    {
-        var current = new StringBuilder();
-        var inQuotes = false;
-        int line = 1, start = 1;
-        foreach (var c in text.TrimStart('﻿'))
-        {
-            if (c == '"') inQuotes = !inQuotes;
-            if (c == '\n')
-            {
-                line++;
-                if (!inQuotes)
-                {
-                    yield return (start, current.ToString().TrimEnd('\r'));
-                    current.Clear();
-                    start = line;
-                    continue;
-                }
-            }
-            current.Append(c);
-        }
-        if (current.Length > 0) yield return (start, current.ToString().TrimEnd('\r'));
-    }
-
-    /// <summary>RFC 4180 fields: quotes around a field allow the delimiter inside it, "" is a literal quote.</summary>
-    public static List<string> SplitFields(string line, char delimiter)
-    {
-        var fields = new List<string>();
-        var field = new StringBuilder();
-        var inQuotes = false;
-        for (var i = 0; i < line.Length; i++)
-        {
-            var c = line[i];
-            if (inQuotes)
-            {
-                if (c == '"' && i + 1 < line.Length && line[i + 1] == '"') { field.Append('"'); i++; }
-                else if (c == '"') inQuotes = false;
-                else field.Append(c);
-            }
-            else if (c == '"') inQuotes = true;
-            else if (c == delimiter) { fields.Add(field.ToString()); field.Clear(); }
-            else field.Append(c);
-        }
-        fields.Add(field.ToString());
-        return fields;
     }
 }
 

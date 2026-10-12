@@ -91,6 +91,9 @@ public static class DependencyInjection
         services.AddSingleton<IMarketService, MarketService>();
         services.AddSingleton<IValidator<SubmissionInput>, SubmissionInputValidator>();
         services.AddSingleton<ISubmissionService, SubmissionService>();
+        services.AddSingleton<IValidator<TransactionInput>, TransactionInputValidator>();
+        services.AddSingleton<ITransactionService, TransactionService>();
+        services.AddSingleton<ICollectionImportService, CollectionImportService>();
         services.AddSingleton<IReportService, ReportService>();
         services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<IExportService, ExportService>();

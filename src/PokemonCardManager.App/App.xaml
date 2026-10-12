@@ -46,6 +46,12 @@
             <DataTemplate DataType="{x:Type vm:SubmissionsViewModel}">
                 <views:SubmissionsView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SalesViewModel}">
+                <views:SalesView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CollectionImportViewModel}">
+                <views:CollectionImportView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
                 <views:ReportsView />
             </DataTemplate>

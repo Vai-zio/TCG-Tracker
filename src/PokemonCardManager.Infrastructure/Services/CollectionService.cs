@@ -255,7 +255,12 @@ public sealed class CollectionService(
     private async Task<PhysicalCardInput> ValidateAndNormalizeAsync(PhysicalCardInput input, CancellationToken cancellationToken)
     {
         await validator.ValidateAndThrowAsync(input, cancellationToken);
-        return input with
+        return Normalize(input);
+    }
+
+    /// <summary>Trims text and blanks empty optional fields, so "Base Set " and "Base Set" are the same. Also used by the CSV import.</summary>
+    internal static PhysicalCardInput Normalize(PhysicalCardInput input) =>
+        input with
         {
             SetName = input.SetName.Trim(),
             CardName = input.CardName.Trim(),
@@ -268,7 +273,6 @@ public sealed class CollectionService(
             Notes = Blank(input.Notes),
             PurchaseCurrency = string.IsNullOrWhiteSpace(input.PurchaseCurrency) ? null : CurrencyCode.Normalize(input.PurchaseCurrency),
         };
-    }
 
     /// <summary>
     /// Finds the printing by its identity (set, number, language, finish, edition) or creates it.
@@ -315,7 +319,7 @@ public sealed class CollectionService(
         return reference;
     }
 
-    private static void ApplyCopyDetails(PhysicalCard card, PhysicalCardInput input)
+    internal static void ApplyCopyDetails(PhysicalCard card, PhysicalCardInput input)
     {
         card.AcquiredOn = input.AcquiredOn;
         card.PurchasePrice = input.PurchasePrice;
