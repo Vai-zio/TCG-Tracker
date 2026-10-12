@@ -68,6 +68,7 @@ public sealed class CollectionViewModel : ViewModelBase, INavigationAware
         PreviousPageCommand = new AsyncRelayCommand(() => LoadPageAsync(Page - 1), () => Page > 1);
         ClearFiltersCommand = new AsyncRelayCommand(ClearFiltersAsync);
         NewCardCommand = new AsyncRelayCommand(() => _navigation.NavigateToAsync<CardEditorViewModel>());
+        AddFromPhotosCommand = new AsyncRelayCommand(() => _navigation.NavigateToAsync<IdentifyViewModel>());
         EditCardCommand = new AsyncRelayCommand(EditSelectedAsync, () => SelectedRow is not null);
         InspectCardCommand = new AsyncRelayCommand(
             () => _navigation.NavigateToAsync<InspectionViewModel>(new InspectionTarget(SelectedRow!.Id)), () => SelectedRow is not null);
@@ -114,6 +115,7 @@ public sealed class CollectionViewModel : ViewModelBase, INavigationAware
     public AsyncRelayCommand PreviousPageCommand { get; }
     public AsyncRelayCommand ClearFiltersCommand { get; }
     public AsyncRelayCommand NewCardCommand { get; }
+    public AsyncRelayCommand AddFromPhotosCommand { get; }
     public AsyncRelayCommand EditCardCommand { get; }
     public AsyncRelayCommand InspectCardCommand { get; }
     public AsyncRelayCommand DeleteCardCommand { get; }

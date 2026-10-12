@@ -45,4 +45,6 @@ public sealed record IdentificationConfirmation(
     string? CatalogSource,
     string? ExternalId,
     string? ReferenceImageUrl,
+    /// <summary>Printed set size from the catalog, recorded on the set if it isn't known yet.</summary>
+    int? SetOfficialCount = null,
     CardSide Side = CardSide.Front);

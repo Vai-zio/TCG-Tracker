@@ -46,6 +46,7 @@ public partial class App : Application
             .WriteTo.File(logFile, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
             .CreateLogger(), dispose: true);
 
+        builder.Services.AddSingleton<PokemonCardManager.Core.Identification.IOcrEngine, Ocr.WindowsOcrEngine>(); // before AddInfrastructure, which only adds a fallback
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<NavigationService>();
@@ -58,6 +59,7 @@ public partial class App : Application
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<InspectionViewModel>();
+        builder.Services.AddTransient<IdentifyViewModel>(); // leaving with unadded matches asks first
 
         _host = builder.Build();
         var logger = _host.Services.GetRequiredService<ILogger<App>>();

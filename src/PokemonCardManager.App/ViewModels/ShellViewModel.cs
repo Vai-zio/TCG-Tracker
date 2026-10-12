@@ -20,6 +20,8 @@ public sealed class ShellViewModel : ViewModelBase
             new NavItem("Dashboard", "", p => p is DashboardViewModel, () => navigation.NavigateToAsync<DashboardViewModel>()),
             new NavItem("Collection", "", p => p is CollectionViewModel or CardEditorViewModel,
                 () => navigation.NavigateToAsync<CollectionViewModel>()),
+            new NavItem("Add from photos", "\uE722", p => p is IdentifyViewModel,
+                () => navigation.NavigateToAsync<IdentifyViewModel>()),
             new NavItem("Inspection", "", p => p is InspectionViewModel,
                 () => navigation.NavigateToAsync<InspectionViewModel>()),
             new NavItem("Storage locations", "", p => p is StorageLocationsViewModel,

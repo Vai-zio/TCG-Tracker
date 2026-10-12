@@ -119,7 +119,7 @@ public sealed class IdentificationService(
         var cardId = await collection.AddPhysicalCardAsync(confirmation.Card, cancellationToken);
 
         if (confirmation.CatalogSource is { } source && confirmation.ExternalId is { } externalId)
-            await LinkCatalogAsync(cardId, source, externalId, confirmation.ReferenceImageUrl, cancellationToken);
+            await LinkCatalogAsync(cardId, source, externalId, confirmation.ReferenceImageUrl, confirmation.SetOfficialCount, cancellationToken);
 
         // The photo is imported unchanged; the straightened crop is stored as a separate image derived from it.
         var kind = confirmation.Side == CardSide.Back ? ImageKind.Back : ImageKind.Front;
@@ -132,11 +132,13 @@ public sealed class IdentificationService(
     }
 
     /// <summary>Records where the printing's details came from, without overwriting anything already known.</summary>
-    private async Task LinkCatalogAsync(Guid cardId, string source, string externalId, string? imageUrl, CancellationToken cancellationToken)
+    private async Task LinkCatalogAsync(Guid cardId, string source, string externalId, string? imageUrl, int? setCount,
+        CancellationToken cancellationToken)
     {
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         var referenceId = await db.PhysicalCards.Where(c => c.Id == cardId).Select(c => c.CardReferenceId).SingleAsync(cancellationToken);
-        var reference = await db.CardReferences.SingleAsync(r => r.Id == referenceId, cancellationToken);
+        var reference = await db.CardReferences.Include(r => r.CardSet).SingleAsync(r => r.Id == referenceId, cancellationToken);
+        reference.CardSet.TotalCards ??= setCount;
 
         // Local results carry "Provider:id"; only real outside ids are recorded.
         if (source == "Your collection") return;

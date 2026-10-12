@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <!-- Windows 10 2004+ APIs: built-in OCR (Windows.Media.Ocr) for reading card text -->
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
     <!-- Lets the project compile on non-Windows machines (e.g. CI). The app itself only runs on Windows. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

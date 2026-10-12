@@ -31,6 +31,9 @@ Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManage
 | `Storage:DatabaseFileName` | Database file name (a plain name, no folders). |
 | `Storage:MaxImageSizeMegabytes` | Largest photo accepted for import. |
 | `Collection:DefaultCurrency` | Currency pre-filled for purchase prices, e.g. `DKK`. |
+| `Catalogs:TcgdexEnabled` | Look cards up online in TCGdex. `false` keeps identification fully offline (your own collection only). |
+| `Catalogs:TimeoutSeconds` | How long to wait for TCGdex before carrying on without it. |
+| `ImageQuality:*` | Limits for the photo quality check (`MinShortSide`, `MinSharpness`, `GoodSharpness`, `MinBrightness`, `MaxBrightness`, `MaxBrightClipped`). |
 | `Logging:LogLevel` | How much to log. |
 
 No secrets belong in this file. API keys for future integrations will use local secret storage.
@@ -103,7 +106,9 @@ A test fails if the model changes without a migration. The app applies new migra
 | FluentValidation | Input validation | Apache 2.0 |
 | Serilog.Extensions.Logging, Serilog.Sinks.File | Log files | Apache 2.0 |
 | MetadataExtractor | Reading image size, type and capture date | Apache 2.0 |
-| OpenCvSharp4 (+ runtime.win in the app, official.runtime.linux-x64 in tests) | Photo quality analysis (later: card detection) | Apache 2.0 (OpenCV itself: Apache 2.0) |
+| OpenCvSharp4 (+ runtime.win in the app, official.runtime.linux-x64 in tests) | Photo quality, card detection, perspective correction | Apache 2.0 (OpenCV itself: Apache 2.0) |
+| Windows.Media.Ocr (part of Windows 10/11, via the `net10.0-windows10.0.19041.0` target) | Reading card text | Included with Windows |
+| TCGdex API (online service, optional) | Card reference data | Data under MIT; not affiliated with Nintendo / The Pokémon Company |
 | xUnit, Microsoft.NET.Test.Sdk, coverlet | Tests | Apache 2.0 / MIT |
 
 ## Status
@@ -142,6 +147,18 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
   status). Areas you didn't tick are saved as "not inspected", and an inspection is flagged "limited evidence" when
   areas are missing or a photo was inadequate. No grade is produced; that needs the assessment engine (Milestone 5).
 
+**Milestone 4 (identification): done.**
+- "Add from photos" (sidebar or Collection): choose one or many photos; they are read one by one in the
+  background (Stop cancels). For each: quality check → find the card outline and straighten it (OpenCV
+  perspective warp to 63×88 proportions) → read text with Windows' built-in OCR → find the name (top of the card)
+  and collector number (bottom, e.g. `136/189`, `TG05/TG30`, `SWSH050`) → search catalogs → rank matches.
+- Catalogs sit behind `ICardCatalogProvider`: **Your collection** (offline, searched first) and **TCGdex**
+  (`GET api.tcgdex.net/v2/{lang}/cards?name=…` and `/cards/{id}`, no key needed). A failing catalog becomes a warning.
+- The match score (0–1) is a ranking aid, not a probability: number 45%, name similarity 40%, set size 15%.
+- Manual fallback: correct the name/number and search again, or type the card in. Nothing is added until you confirm.
+- Confirming creates the card, imports the photo unchanged as the original, stores the straightened crop as a
+  derived image, and records the TCGdex id and set size on the printing.
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value (comes with valuation in Milestone 6).
@@ -154,13 +171,18 @@ Known limitations:
   Milestone 4); marks from past inspections are listed in History but not redrawn on the photo; phone photos are
   shown as stored, so use Rotate if one appears sideways.
 - The bundled OpenCV library is for 64-bit (x64) Windows.
+- Identification: the TCGdex client was written from TCGdex's documentation and tested against documented response
+  shapes, but couldn't be called live from the build environment; try it once and report anything odd. Set symbols
+  aren't recognised (the number and set size do that job). Finish (holo, reverse holo) and edition can't be told
+  from a photo reliably, so check them before adding. OCR needs a Windows OCR language pack (installed with the
+  Windows display language). Batches are read one photo at a time.
 
 ### Roadmap
 
 1. ~~Foundation~~
 2. ~~Collection management~~
 3. ~~Image inspection~~
-4. Identification: catalog provider abstraction, OCR, matching, manual fallback, batch scan
+4. ~~Identification~~
 5. Grading assessment: rule-based engine, evidence and confidence reporting, company profiles
 6. Valuation: price history, manual entry and CSV import, expected value and break-even
 7. Submission tracking and reports

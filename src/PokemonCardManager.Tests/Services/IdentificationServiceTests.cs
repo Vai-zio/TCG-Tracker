@@ -126,7 +126,7 @@ public class IdentificationServiceTests : IAsyncLifetime
 
         var cardId = await Identification.ConfirmAsync(new IdentificationConfirmation(photo, result.Detection.CorrectedPng,
             new PhysicalCardInput { SetName = chosen.SetName, CardName = chosen.Name, CollectorNumber = chosen.CollectorNumber, Rarity = chosen.Rarity },
-            chosen.Source, chosen.ExternalId, chosen.ImageUrl));
+            chosen.Source, chosen.ExternalId, chosen.ImageUrl, chosen.SetOfficialCount));
 
         var images = await _env.Services.GetRequiredService<IImageService>().GetImagesAsync(cardId);
         Assert.Equal(2, images.Count);
@@ -137,6 +137,7 @@ public class IdentificationServiceTests : IAsyncLifetime
         await using var db = _env.CreateDbContext();
         var reference = await db.CardReferences.Include(r => r.ExternalIds).SingleAsync();
         Assert.Equal("Mock catalog", reference.DataSource);
+        Assert.Equal(189, (await db.CardSets.SingleAsync()).TotalCards);
         Assert.Equal(("Mock catalog", "swsh3-136"), (reference.ExternalIds[0].Provider, reference.ExternalIds[0].ExternalId));
         Assert.Equal(original.Id, (await db.CardImages.SingleAsync(i => i.OriginalImageId != null)).OriginalImageId);
     }
