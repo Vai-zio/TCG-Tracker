@@ -16,7 +16,13 @@ public class GradingSubmission : Entity, IHasTimestamps
     /// <summary>The company's own order/submission number, once known.</summary>
     public string? ExternalReference { get; set; }
     public required string ServiceTier { get; set; }
+    /// <summary>The fee tier used, when it's in the tier table. Gives the exact fee for profit math.</summary>
+    public Guid? ServiceTierId { get; set; }
+    public GradingServiceTier? ServiceTierDetails { get; set; }
+
     public DateOnly? SubmittedOn { get; set; }
+    public DateOnly? ReceivedByGraderOn { get; set; }
+    public DateOnly? ReturnedOn { get; set; }
     public SubmissionStatus Status { get; set; }
 
     public required string Currency { get; set; }
@@ -53,6 +59,12 @@ public class SubmissionItem : Entity
     public ConditionAssessment? PredictionAssessment { get; set; }
 
     public decimal? DeclaredValue { get; set; }
+    /// <summary>This card's own grading fee (in the submission's currency), e.g. when declared value bumps the tier.</summary>
+    public decimal? GradingFee { get; set; }
+
+    /// <summary>Grade range we expected when sending it. Copied here so it can be compared with the result.</summary>
+    public decimal? PredictedGradeLow { get; set; }
+    public decimal? PredictedGradeHigh { get; set; }
     public decimal? ReturnedGrade { get; set; }
     public string? CertificationNumber { get; set; }
     public string? Notes { get; set; }
