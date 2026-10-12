@@ -1,15 +1,28 @@
 # Glossary
 
-- **Binding**: live link between a screen control and a ViewModel property. [[Data Binding]]
+- **Async / await**: lets slow work (database, files) run without freezing the window.
+- **Audit entry**: a log row recording who/what changed. [[Interceptors]]
+- **Binding**: live link between a control and a ViewModel property. [[Data Binding]]
+- **CardReference**: one printing of a card. [[Data Model]]
 - **Command (`ICommand`)**: a method wrapped so a button can trigger it. [[MVVM]]
+- **Composition root**: the one place that builds the app. [[Startup]]
+- **Container**: the object that creates classes and hands in what they need. [[Dependency Injection]]
+- **DataTemplate**: XAML rule "for this ViewModel type, draw this View". [[Navigation]]
 - **DbContext**: EF Core's gateway to the database. [[Entity Framework Core]]
 - **DbSet**: one table inside a DbContext.
-- **Dependency Injection (DI)**: classes receive what they need instead of creating it. [[Dependency Injection]]
 - **Entity**: a C# class saved as a table row.
+- **GUID**: a random-looking 128-bit Id that's unique without asking the database.
+- **Index**: a database lookup table that makes searching a column fast.
+- **Interceptor**: code that runs automatically on every save. [[Interceptors]]
 - **Interface**: a list of methods a class promises to have, with no code inside.
 - **Migration**: a saved step that changes the database shape. [[Migrations]]
-- **Model**: the data part of MVVM, e.g. `Card`.
 - **ObservableCollection**: a list that tells the screen when items change.
-- **Solution (`.sln`)**: the file that groups all the projects together.
-- **View**: a XAML window or control. [[WPF and XAML]]
-- **ViewModel**: the class behind a View that holds its data and commands.
+- **Options**: a typed class bound to a section of `appsettings.json`. [[Configuration and Logging]]
+- **PhysicalCard**: one copy you own. [[Data Model]]
+- **SHA-256**: a fingerprint of a file's bytes. [[Photos]]
+- **Singleton / Transient**: one shared instance vs a new one each time. [[Dependency Injection]]
+- **Solution (`.sln`)**: the file that groups all projects.
+- **Transaction**: a group of database changes that all succeed or all fail.
+- **View**: a XAML screen. [[WPF and XAML]]
+- **ViewModel**: the class behind a View holding its data and commands. [[MVVM]]
+- **WAL**: SQLite's crash-safe write mode. [[SQLite]]

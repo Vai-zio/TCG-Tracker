@@ -1,27 +1,28 @@
 # How the App Fits Together
 
-The app is split into **layers**. Each layer has one job and only talks to the layer below it.
+The code is split into four projects. Each has one job, and the arrows show who is allowed to use whom.
 
 ```
-App   (WPF screens + ViewModels)   what you see and click
-  │
-Core  (cards, rules, interfaces)   what a "card" is and what we can do with it
-  │
-Data  (EF Core + SQLite)           where cards are saved
+App (WPF screens, ViewModels) ──► Core ◄── Infrastructure (EF Core + SQLite)
+                                   ▲              ▲
+                                   └──── Tests ───┘
 ```
 
-**Why split it?** If the screen code also saved to the database, changing one would break the other. Separate layers mean you can swap SQLite for something else, or redesign a screen, without touching the rest.
+| Project | Job |
+|---|---|
+| **Core** | Plain C# classes for what we store ([[Data Model]]), the rules ([[Validation]], [[Money and Decimals]]) and *interfaces* like `ICollectionService`. No screens, no database. |
+| **Infrastructure** | Makes those interfaces real: saves and loads with [[Entity Framework Core]] into [[SQLite]], copies [[Photos]] to disk. |
+| **App** | The window. Views and ViewModels ([[MVVM]]) that call Core interfaces. Also wires everything up at [[Startup]]. |
+| **Tests** | Checks Core rules and runs Infrastructure against a temporary database ([[Tests]]). |
+
+**Why the arrows point at Core:** the App only knows `ICollectionService` (a promise of what can be done), not `CollectionService` (how it's done with SQLite). So the database code could be replaced without touching a single screen. [[Dependency Injection]] is what connects the promise to the real thing.
 
 ## A click, step by step
-1. You click **Add card** on a screen ([[WPF and XAML]]).
-2. The button is linked to a command on the ViewModel ([[MVVM]], [[Data Binding]]).
-3. The ViewModel asks a service from Core to add the card.
-4. The service hands the card to Data, which saves it with [[Entity Framework Core]] into the [[SQLite]] file.
-5. The ViewModel's card list changes, and the screen updates by itself.
-
-## Rule of thumb
-- **Core** knows nothing about screens or databases.
-- **Data** knows about the database, but not screens.
-- **App** wires everything together at startup ([[Dependency Injection]]).
+Clicking **Save** in the card editor:
+1. The button's `Command="{Binding SaveCommand}"` runs a method on `CardEditorViewModel` ([[Data Binding]]).
+2. The ViewModel builds a `PhysicalCardInput` from the form and calls `ICollectionService.AddPhysicalCardAsync`.
+3. `CollectionService` (Infrastructure) checks the input ([[Validation]]), finds or creates the printing, and saves in one transaction.
+4. Just before the save, [[Interceptors]] stamp the time and write an audit entry.
+5. EF Core turns it into SQL `INSERT`s in the SQLite file.
 
 Next: [[Code Map]]

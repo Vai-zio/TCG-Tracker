@@ -1,10 +1,21 @@
 # TCG Tracker Docs
 
-Open this `docs/` folder as an Obsidian vault. Each note explains one idea in plain words, and links lead to the next idea.
+Open this `docs/` folder as an Obsidian vault. Each note explains one idea in plain words; follow the links to go deeper.
 
 ## Start here
 1. [[How the App Fits Together]]: the big picture in one page
-2. [[Code Map]]: which folder holds what
+2. [[Code Map]]: which folder and file holds what
+3. [[Startup]]: what happens when the app opens
+
+## Follow the code
+- [[Data Model]]: what we store (printings, your copies, photos, history)
+- [[Searching the Collection]]: one search, from the screen down to SQL
+- [[Navigation]]: how pages switch
+- [[Photos]]: how pictures are imported and shown
+- [[Validation]]: how bad input is caught
+- [[Money and Decimals]]: why prices are never floats
+- [[Interceptors]]: automatic timestamps, audit log and history protection
+- [[Configuration and Logging]]: `appsettings.json` and log files
 
 ## Core ideas
 - [[MVVM]]: how screens are kept separate from logic

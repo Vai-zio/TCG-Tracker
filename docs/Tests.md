@@ -1,26 +1,34 @@
 # Tests
 
-Tests are small programs that check the real code does what we expect. Run them all with:
-
+Small programs that check the real code does what we expect. Run them all from the repo root:
 ```
 dotnet test
 ```
+They run on Windows, Linux and macOS.
 
-## What a test looks like
+## What a test looks like (xUnit)
 ```csharp
 [Fact]
-public void New_card_starts_with_quantity_one()
+public void Refuses_to_combine_different_currencies()   // simplified from Domain/MoneyTests.cs
 {
-    var card = new Card();
-    Assert.Equal(1, card.Quantity);
+    var dkk = new Money(10m, "DKK");          // Arrange
+    var eur = new Money(5m, "EUR");
+    Assert.Throws<InvalidOperationException>(() => dkk + eur);  // Act + Assert
 }
 ```
-- `[Fact]` marks a test (xUnit style).
-- **Arrange** (make a card), **Act** (do something), **Assert** (check the result).
+`[Fact]` marks a test. The pattern is **Arrange** (set up), **Act** (do it), **Assert** (check).
 
-## What we test
-- **Core rules**: pure logic, fast and easy.
-- **ViewModels**: possible without a window, thanks to [[MVVM]].
-- **Data**: against a throwaway in-memory [[SQLite]] database, so real data is never touched.
+## The three kinds here
+| Folder | Tests | Speed |
+|---|---|---|
+| `Domain/` | Pure rules: `Money`, validation, defect severity | instant |
+| `Persistence/` | The database: migrations, WAL, audit log, history protection | fast |
+| `Services/` | `CollectionService`, `ImageService`, storage locations | fast |
 
-[[Dependency Injection]] makes this possible by letting tests pass in fakes.
+## `TestEnvironment.cs`
+Database tests use the **real** wiring (`AddInfrastructure`, see [[Dependency Injection]]) pointed at a **temporary SQLite file** that is deleted afterwards. Your real collection is never touched.
+
+It also swaps in a **`FakeClock`** with a fixed time, so a test can check that `CreatedAt` is exactly what it expects ([[Interceptors]]).
+
+## What isn't tested yet
+The WPF screens themselves. They compile everywhere, but must be tried by hand on Windows.

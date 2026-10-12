@@ -3,27 +3,31 @@
 Instead of a class creating the things it needs, it **asks for them** in its constructor.
 
 ```csharp
-public class CollectionViewModel
-{
-    private readonly ICardService _cards;
-
-    public CollectionViewModel(ICardService cards) // "I need a card service"
-    {
-        _cards = cards;
-    }
-}
+public CollectionViewModel(ICollectionService collection, IStorageLocationService locations,
+    IImageService images, NavigationService navigation, IDialogService dialogs)
 ```
 
-At startup the app registers what to hand out:
+The **container** builds it and hands in each piece. It knows what to hand out because everything is registered at [[Startup]]:
 
 ```csharp
-services.AddSingleton<ICardService, CardService>();
+// Infrastructure/DependencyInjection.cs
+services.AddSingleton<ICollectionService, CollectionService>();
+// App/App.xaml.cs
+builder.Services.AddSingleton<CollectionViewModel>();
+```
+"Whenever someone asks for an `ICollectionService`, give them the `CollectionService`."
+
+## Lifetimes
+- **Singleton**: one shared instance for the whole app run.
+- **Transient**: a new instance every time it's asked for.
+
+## Database contexts
+A `DbContext` should live briefly, so it isn't injected directly. Instead, services get a **factory** and open a fresh one per method:
+```csharp
+await using var db = await contextFactory.CreateDbContextAsync();
 ```
 
-Now whenever something asks for an `ICardService`, it gets a `CardService`.
-
 ## Why?
-- **Swappable:** in [[Tests]], hand in a fake service instead of the real database.
-- **One place to wire things:** all setup lives in the App's startup code.
-
-The `I` in `ICardService` means it is an **interface**: a promise of what methods exist, not how they work. Core defines interfaces; other layers fill them in. See [[How the App Fits Together]].
+- **Swappable**: [[Tests]] register a `FakeClock` instead of the real clock.
+- **One place to wire things**: `AddInfrastructure` is used by both the app *and* the tests, so tests check the real wiring.
+- The App depends on Core *interfaces*, never on Infrastructure classes ([[How the App Fits Together]]).
