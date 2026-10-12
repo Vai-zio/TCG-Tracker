@@ -21,6 +21,13 @@ public interface IKeyVault
     /// <summary>Returns false when <paramref name="currentPassword"/> is wrong.</summary>
     Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default);
 
+    /// <summary>
+    /// The data key as stored on disk: encrypted with the master password, so it is
+    /// safe to keep next to backups. A backup that carries it can be opened on another
+    /// PC with just the master password.
+    /// </summary>
+    string ExportWrappedKey();
+
     /// <summary>Wipes the data key from memory.</summary>
     void Lock();
 

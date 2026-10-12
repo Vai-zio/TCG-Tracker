@@ -18,7 +18,8 @@ Encryption for TCG Tracker, ported from `Cryptography.py` to C# (`System.Securit
 | Data | Encrypted? | Why |
 | --- | --- | --- |
 | API keys and other secrets | Yes, `EncryptString` | Small and valuable; stored as `v1:<base64>` in config or the database. |
-| Backups / exports | Yes, `EncryptFileAsync` | Backups leave the PC (USB, cloud), so they are the most exposed copy. |
+| Backups | Yes, `EncryptStreamAsync` per file in the zip | Backups leave the PC (USB, cloud), so they are the most exposed copy. `manifest.json` stays readable so the backup list loads fast. |
+| CSV exports | No | They are made for you to open in a spreadsheet. |
 | Live SQLite database | Not yet | Encrypting it needs SQLCipher (`SQLitePCLRaw.bundle_e_sqlcipher`) in the data project. The vault's data key can be its password. Planned as a follow-up so it doesn't clash with the schema work. |
 | Card photos | No | Not sensitive, and encrypting 20k+ images would slow browsing. They are encrypted when included in a backup. |
 
@@ -35,7 +36,7 @@ Encryption for TCG Tracker, ported from `Cryptography.py` to C# (`System.Securit
 - **Every later start:** `TryUnlockAsync` derives the key from the password and unwraps the data key. A wrong password just shows an error.
 - The data key stays in memory until the app closes; the host disposes the vault on exit, which wipes it. Closing the lock screen quits the app.
 
-Forgetting the master password means the encrypted data cannot be recovered. Keep `vault.key` with your backups: encrypted backups can't be opened without it.
+Forgetting the master password means the encrypted data cannot be recovered. Every backup also carries a copy of `vault.key`. It is itself encrypted with the master password, so it's safe there, and it means the backup plus your password is enough to recover. (Restoring onto a PC with a *different* vault isn't automated yet; for now, copy the backup's `vault.key` into the data folder first.)
 
 ## Tests
 

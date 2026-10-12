@@ -53,6 +53,7 @@ grades come back, type them in with the certificate numbers and mark it returned
 **Backup & export → Back up now** writes one `.zip` (database plus photos if ticked) with a checksum for every file.
 A database-only backup is also made automatically once a week at startup. **Check** confirms a backup is intact.
 **Restore** first saves your current state as another backup, so a restore can always be undone.
+Backups are encrypted with your master password, so a copied backup is useless to anyone without it. Backups made before encryption still restore.
 Copy backups to another drive or a cloud folder: a backup on the same disk doesn't survive that disk failing.
 
 ## Where things are kept

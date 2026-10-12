@@ -14,7 +14,6 @@ using PokemonCardManager.App.Views;
 using PokemonCardManager.Core.Services;
 using PokemonCardManager.Infrastructure;
 using PokemonCardManager.Infrastructure.Options;
-using PokemonCardManager.Security;
 using Serilog;
 
 namespace PokemonCardManager.App;
@@ -64,9 +63,6 @@ public partial class App : Application
 
         builder.Services.AddSingleton<PokemonCardManager.Core.Identification.IOcrEngine, Ocr.WindowsOcrEngine>(); // before AddInfrastructure, which only adds a fallback
         builder.Services.AddInfrastructure(builder.Configuration);
-        // Encryption: the vault holds the data key in memory once unlocked; the host disposes it on exit, which wipes the key.
-        builder.Services.AddSingleton<IKeyVault>(_ => new FileKeyVault(Path.Combine(storage.ResolveDataDirectory(), "vault.key")));
-        builder.Services.AddSingleton<IEncryptionService, AesGcmEncryptionService>();
         builder.Services.AddTransient<UnlockViewModel>();
         builder.Services.AddTransient<UnlockWindow>();
         builder.Services.AddSingleton<IDialogService, DialogService>();

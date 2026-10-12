@@ -57,6 +57,9 @@ public sealed class FileKeyVault : IKeyVault, IDisposable
         return true;
     }, ct);
 
+    public string ExportWrappedKey() =>
+        Exists ? File.ReadAllText(_vaultPath).Trim() : throw new InvalidOperationException("No vault exists yet. Create one first.");
+
     public void Lock() => SetKey(null);
 
     public byte[] GetDataKey()
