@@ -66,15 +66,15 @@
                         <TextBlock Text="cards marked as candidates" Style="{StaticResource SubtleTextStyle}" />
                     </StackPanel>
                 </Border>
-                <!-- Honest placeholder: values need price data (Milestone 6) -->
+                <!-- Only cards with recorded sales or estimates are counted; the subtitle says how many weren't. -->
                 <Border Style="{StaticResource GlassTileStyle}" Margin="8">
                     <StackPanel>
                         <Border Style="{StaticResource IconBubbleStyle}" Background="{DynamicResource MintSoftBrush}">
                             <TextBlock Text="&#xE719;" Style="{StaticResource IconTextStyle}" Foreground="{DynamicResource MintBrush}" />
                         </Border>
                         <TextBlock Text="Estimated value" Style="{StaticResource TileLabelStyle}" />
-                        <TextBlock Text="—" Style="{StaticResource TileValueStyle}" Foreground="{DynamicResource SubtleTextBrush}" />
-                        <TextBlock Text="needs market prices (Milestone 6)" Style="{StaticResource SubtleTextStyle}" />
+                        <TextBlock Text="{Binding ValueText}" Style="{StaticResource TileValueStyle}" />
+                        <TextBlock Text="{Binding ValueNote}" Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
             </UniformGrid>

@@ -14,6 +14,8 @@ public interface IDialogService
     IReadOnlyList<string> PickImageFiles(IEnumerable<string> extensions);
     /// <summary>One file, or null if the user cancelled. Filter uses the WPF format, e.g. "CSV files|*.csv".</summary>
     string? PickFile(string title, string filter);
+    /// <summary>Where to save, or null if the user cancelled.</summary>
+    string? PickSaveFile(string title, string filter, string suggestedName);
 }
 
 public sealed class DialogService : IDialogService
@@ -42,6 +44,12 @@ public sealed class DialogService : IDialogService
     public string? PickFile(string title, string filter)
     {
         var dialog = new OpenFileDialog { Title = title, Filter = filter };
+        return dialog.ShowDialog(Owner()) == true ? dialog.FileName : null;
+    }
+
+    public string? PickSaveFile(string title, string filter, string suggestedName)
+    {
+        var dialog = new SaveFileDialog { Title = title, Filter = filter, FileName = suggestedName };
         return dialog.ShowDialog(Owner()) == true ? dialog.FileName : null;
     }
 

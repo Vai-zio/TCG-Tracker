@@ -88,6 +88,9 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<PriceObservationInput>, PriceObservationInputValidator>();
         services.AddSingleton<IValidator<ExchangeRateInput>, ExchangeRateInputValidator>();
         services.AddSingleton<IMarketService, MarketService>();
+        services.AddSingleton<IValidator<SubmissionInput>, SubmissionInputValidator>();
+        services.AddSingleton<ISubmissionService, SubmissionService>();
+        services.AddSingleton<IReportService, ReportService>();
         return services;
     }
 }

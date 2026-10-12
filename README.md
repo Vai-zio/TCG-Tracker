@@ -200,9 +200,25 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
   grade chances adding up to 100%; the app never invents them. "Fill prices from history" uses completed sales
   (or estimates when there are none, and says so).
 
+**Milestone 7 (submissions and reports): done.**
+- Submissions (`ISubmissionService`): a batch for one company with service level, planned costs (fees, shipping,
+  insurance), the invoiced total once known, order number and tracking. Status moves forward only
+  (draft → shipped → received → grading → completed → returned; steps can be skipped) and can be cancelled until
+  grading is done (`SubmissionWorkflow`). Cards' own status follows: submitted for grading, then graded.
+- Adding a card links its latest rule-based assessment for that company as the **prediction**, stored apart from
+  the **real grade** and certificate number entered when the cards come back. A card can only be in one open
+  submission. Sent submissions can't be deleted; they are history.
+- Reports (`IReportService`, Reports screen, CSV export):
+  - **Predictions vs real grades**, per assessment version. The rules only give an upper limit, so the report
+    measures whether that limit held and by how much, and says when there are too few cards to conclude anything.
+  - Grades received per company, and cost per submission and per card.
+  - **Collection value**: the median of recorded sales for each owned card's tier (raw, or the grade it came back
+    with), estimates only when there are no sales, never asking prices. Cards without a usable price are counted,
+    not guessed. The dashboard's value tile now uses this.
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
-  (the table exists) and filtering by value (comes with valuation in Milestone 6).
+  (the table exists) and filtering by value.
 - Thumbnails are decoded on demand, not cached on disk yet.
 - Search uses `LIKE`, which is fine for 20,000 cards; SQLite full-text search may come later.
 - No sample dataset yet.
@@ -215,6 +231,7 @@ Known limitations:
 - Assessment: only PSA's centering tolerances are built in. Other graders (BGS, CGC, SGC, TAG) can be added as
   profiles once their published standards are checked. Grade prediction from defects needs real graded results
   to validate against (submission tracking in Milestone 7 will start collecting them).
+- Submissions: realised profit needs sales to be recorded; the transactions table exists but has no screen yet.
 - Valuation: grading fees are typed into the calculator each time; saved fee tiers per company come with the
   database schema work (the `GradingServiceTier` table). TCGdex prices couldn't be fetched live from the build
   environment (tested against the documented example). There's no free, licensed source of completed graded sales,
@@ -233,5 +250,5 @@ Known limitations:
 4. ~~Identification~~
 5. ~~Grading assessment~~
 6. ~~Valuation~~
-7. Submission tracking and reports
+7. ~~Submission tracking and reports~~
 8. Backups, restore, large-dataset testing, packaging

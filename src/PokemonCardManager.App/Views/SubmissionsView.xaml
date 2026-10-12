@@ -1,0 +1,172 @@
+<UserControl x:Class="PokemonCardManager.App.Views.SubmissionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top">
+            <Button DockPanel.Dock="Right" Content="_New submission" Command="{Binding NewCommand}"
+                    Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Top" />
+            <TextBlock Text="Grading submissions" Style="{StaticResource PageTitleStyle}" />
+        </DockPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox ItemsSource="{Binding Submissions}" SelectedItem="{Binding Selected}" Margin="0,0,16,0"
+                     AutomationProperties.Name="Submissions" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="2,4">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Style="{StaticResource MutedTextStyle}">
+                                <Run Text="{Binding Status, Mode=OneWay, Converter={StaticResource EnumToText}}" />
+                                · <Run Text="{Binding ItemCount, Mode=OneWay}" /> card(s), <Run Text="{Binding GradedCount, Mode=OneWay}" /> graded
+                                · <Run Text="{Binding TotalCost, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock Grid.Column="1" Style="{StaticResource MutedTextStyle}" Margin="0,40,0,0" HorizontalAlignment="Center" TextWrapping="Wrap"
+                       Text="Pick a submission, or start a new one to plan a batch for a grading company."
+                       Visibility="{Binding HasForm, Converter={StaticResource InverseBoolToVisibility}}" />
+
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                          Visibility="{Binding HasForm, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <!-- Header and costs -->
+                    <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="{Binding FormTitle}" Style="{StaticResource SectionTitleStyle}" />
+                            <WrapPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="_Company" Target="{Binding ElementName=CompanyBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <ComboBox x:Name="CompanyBox" Width="90" ItemsSource="{Binding Companies}" SelectedItem="{Binding Company}" DisplayMemberPath="Label" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Service _level *" Target="{Binding ElementName=TierBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="TierBox" Width="140" Text="{Binding ServiceTier, UpdateSourceTrigger=PropertyChanged}" ToolTip="As the company names it, e.g. Value, Regular, Express" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="C_urrency" Target="{Binding ElementName=CurBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="CurBox" Width="60" Text="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Grading _fees" Target="{Binding ElementName=FeesBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="FeesBox" Width="90" Text="{Binding Fees, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="_Shipping" Target="{Binding ElementName=ShipBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="ShipBox" Width="90" Text="{Binding Shipping, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="_Insurance" Target="{Binding ElementName=InsBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="InsBox" Width="90" Text="{Binding Insurance, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Invoiced _total" Target="{Binding ElementName=ActualBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="ActualBox" Width="90" Text="{Binding ActualTotal, UpdateSourceTrigger=PropertyChanged}" ToolTip="The real final cost, once known. Replaces the planned sum." /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Sent _on" Target="{Binding ElementName=SentBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <DatePicker x:Name="SentBox" Width="140" SelectedDate="{Binding SubmittedOn}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Order _number" Target="{Binding ElementName=RefBox}" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox x:Name="RefBox" Width="120" Text="{Binding Reference, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Tracking (out)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Width="140" Text="{Binding OutboundTracking, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Margin="0,0,10,8"><Label Content="Tracking (back)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Width="140" Text="{Binding ReturnTracking, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                            </WrapPanel>
+                            <Label Content="N_otes" Target="{Binding ElementName=SubNotesBox}" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox x:Name="SubNotesBox" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40" Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                       Visibility="{Binding Error, Converter={StaticResource NotEmptyToVisibility}}" />
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                                    <Button Content="_Save" Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding CostText}" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Status -->
+                    <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12" Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <ComboBox Width="130" ItemsSource="{Binding NextStatuses}" SelectedItem="{Binding NextStatus}" DisplayMemberPath="Label"
+                                          AutomationProperties.Name="Next status" Margin="0,0,8,0" />
+                                <Button Content="_Mark" Command="{Binding MoveCommand}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding StatusText}" Style="{StaticResource SectionTitleStyle}" Margin="0" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Cards -->
+                    <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12" Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Cards" Style="{StaticResource SectionTitleStyle}" />
+                            <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                       Text="The prediction is the latest rule-based assessment for this company when the card was added. Real grades can be entered once the company has received the cards; leave the grade empty for a card that wasn't graded and say why in the notes." />
+                            <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" CanUserAddRows="False" AutomationProperties.Name="Cards in submission">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Card" Binding="{Binding Row.Card}" IsReadOnly="True" Width="2*" />
+                                    <DataGridTextColumn Header="Prediction" Binding="{Binding Row.Prediction}" IsReadOnly="True" Width="*" />
+                                    <DataGridTemplateColumn Header="Declared value" Width="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate><TextBox Text="{Binding DeclaredValue, UpdateSourceTrigger=PropertyChanged}" /></DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Grade" Width="70">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate><TextBox Text="{Binding Grade, UpdateSourceTrigger=PropertyChanged}"
+                                                                   IsEnabled="{Binding DataContext.CanRecordResults, RelativeSource={RelativeSource AncestorType=UserControl}}" /></DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Certificate" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate><TextBox Text="{Binding Certificate, UpdateSourceTrigger=PropertyChanged}"
+                                                                   IsEnabled="{Binding DataContext.CanRecordResults, RelativeSource={RelativeSource AncestorType=UserControl}}" /></DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Notes" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate><TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" /></DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="" Width="140">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="Save" Command="{Binding SaveCommand}" Padding="6,2" Margin="0,0,4,0" />
+                                                    <Button Content="Remove" Command="{Binding RemoveCommand}" Padding="6,2" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <TextBlock Text="{Binding ItemsError}" Style="{StaticResource ErrorTextStyle}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                       Visibility="{Binding ItemsError, Converter={StaticResource NotEmptyToVisibility}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Add cards (drafts only) -->
+                    <Border Style="{StaticResource GlassPanelStyle}" Visibility="{Binding CanEditItems, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Add cards" Style="{StaticResource SectionTitleStyle}" />
+                            <DockPanel Margin="0,0,0,8">
+                                <Button DockPanel.Dock="Right" Content="Search" Command="{Binding FindCardsCommand}" Margin="8,0,0,0" />
+                                <TextBox Text="{Binding CardSearch, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Search cards to add">
+                                    <TextBox.InputBindings><KeyBinding Key="Enter" Command="{Binding FindCardsCommand}" /></TextBox.InputBindings>
+                                </TextBox>
+                            </DockPanel>
+                            <ListBox ItemsSource="{Binding Candidates}" MaxHeight="280" AutomationProperties.Name="Cards you can add">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Card.Card}" />
+                                                <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedTextStyle}" />
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Content="_Add ticked cards" Command="{Binding AddCardsCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</UserControl>

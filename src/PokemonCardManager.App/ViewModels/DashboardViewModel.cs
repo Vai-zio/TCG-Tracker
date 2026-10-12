@@ -1,4 +1,5 @@
 using System.Windows;
+using Microsoft.Extensions.Configuration;
 using PokemonCardManager.App.Navigation;
 using PokemonCardManager.Core.Records;
 using PokemonCardManager.Core.Services;
@@ -6,9 +7,16 @@ using PokemonCardManager.Core.Services;
 namespace PokemonCardManager.App.ViewModels;
 
 /// <summary>Overview of the collection. Every number is counted from the database when the page opens.</summary>
-public sealed class DashboardViewModel(IDashboardService dashboard, NavigationService navigation) : ViewModelBase, INavigationAware
+public sealed class DashboardViewModel(IDashboardService dashboard, IReportService reports, IConfiguration configuration, NavigationService navigation)
+    : ViewModelBase, INavigationAware
 {
     private DashboardSummary? _summary;
+    private string _valueText = "—";
+    private string _valueNote = "";
+
+    /// <summary>Sum of recorded sale medians (or estimates) for cards still owned. "—" when nothing has a price.</summary>
+    public string ValueText { get => _valueText; private set => SetProperty(ref _valueText, value); }
+    public string ValueNote { get => _valueNote; private set => SetProperty(ref _valueNote, value); }
 
     public DashboardSummary? Summary { get => _summary; private set => SetProperty(ref _summary, value); }
     public IReadOnlyList<RarityBar> Rarities { get; private set; } = [];
@@ -30,6 +38,12 @@ public sealed class DashboardViewModel(IDashboardService dashboard, NavigationSe
         var now = DateTime.UtcNow;
         Activity = summary.RecentActivity.Select(a => new ActivityLine(a, now)).ToList();
         Summary = summary;
+
+        var currency = configuration["Collection:DefaultCurrency"] is { Length: 3 } c ? c : "DKK";
+        var value = await reports.GetCollectionValueAsync(currency);
+        ValueText = value.ValuedCards == 0 ? "—" : $"{value.Total.Amount:N0} {value.Currency}";
+        ValueNote = value.ValuedCards == 0 ? "add prices in Market to see this"
+            : $"{value.ValuedCards} card(s) priced" + (value.UnvaluedCards > 0 ? $", {value.UnvaluedCards} without a price" : "");
         OnPropertyChanged(nameof(Rarities));
         OnPropertyChanged(nameof(Activity));
         OnPropertyChanged(nameof(IsEmpty));
