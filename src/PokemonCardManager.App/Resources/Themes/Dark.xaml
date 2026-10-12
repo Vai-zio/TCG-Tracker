@@ -12,9 +12,9 @@
         <GradientStop Color="#141A2B" Offset="1" />
     </LinearGradientBrush>
     <!-- Soft coloured glows behind the glass panels -->
-    <SolidColorBrush x:Key="Glow1Brush" Color="#7C5CFF" Opacity="0.35" />
-    <SolidColorBrush x:Key="Glow2Brush" Color="#FF7EB6" Opacity="0.22" />
-    <SolidColorBrush x:Key="Glow3Brush" Color="#4FD1C5" Opacity="0.18" />
+    <SolidColorBrush x:Key="Glow1Brush" Color="#7C5CFF" Opacity="0.10" />
+    <SolidColorBrush x:Key="Glow2Brush" Color="#FF7EB6" Opacity="0.07" />
+    <SolidColorBrush x:Key="Glow3Brush" Color="#4FD1C5" Opacity="0.05" />
 
     <SolidColorBrush x:Key="SidebarBrush" Color="#0DFFFFFF" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#14FFFFFF" />

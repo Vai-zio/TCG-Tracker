@@ -9,9 +9,9 @@
         <GradientStop Color="#F3F0FB" Offset="0.55" />
         <GradientStop Color="#EEF6FF" Offset="1" />
     </LinearGradientBrush>
-    <SolidColorBrush x:Key="Glow1Brush" Color="#B9A6FF" Opacity="0.45" />
-    <SolidColorBrush x:Key="Glow2Brush" Color="#FFC2DD" Opacity="0.45" />
-    <SolidColorBrush x:Key="Glow3Brush" Color="#B5F0E1" Opacity="0.45" />
+    <SolidColorBrush x:Key="Glow1Brush" Color="#B9A6FF" Opacity="0.15" />
+    <SolidColorBrush x:Key="Glow2Brush" Color="#FFC2DD" Opacity="0.15" />
+    <SolidColorBrush x:Key="Glow3Brush" Color="#B5F0E1" Opacity="0.15" />
 
     <SolidColorBrush x:Key="SidebarBrush" Color="#8CFFFFFF" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#B3FFFFFF" />
