@@ -76,6 +76,8 @@ public partial class App : Application
         builder.Services.AddTransient<InspectionViewModel>();
         builder.Services.AddTransient<MarketViewModel>();
         builder.Services.AddTransient<SubmissionsViewModel>();
+        builder.Services.AddTransient<SalesViewModel>();
+        builder.Services.AddTransient<CollectionImportViewModel>();
         builder.Services.AddTransient<ReportsViewModel>();
         builder.Services.AddTransient<BackupViewModel>();
         builder.Services.AddTransient<IdentifyViewModel>(); // leaving with unadded matches asks first

@@ -69,5 +69,71 @@ public static class GradingProfiles
         ],
     };
 
-    public static IReadOnlyList<GradingProfile> BuiltIn { get; } = [PsaCentering];
+    /// <summary>
+    /// CGC Cards centering from CGC's grading scale (cgccards.com/card-grading/grading-scale, checked 12 Oct 2026).
+    /// Gem Mint 10 is used rather than Pristine 10 (50/50), because both are a 10 and the ceiling must not be too strict.
+    /// CGC gives no figures for some grades and no back figure below 9. A grade with no figure takes the next lower
+    /// grade's limit, and a missing back figure means no limit: the result stays a true "at most", never stricter than CGC.
+    /// </summary>
+    public static GradingProfile CgcCentering { get; } = new()
+    {
+        Id = "cgc-centering",
+        CompanyCode = "CGC",
+        CompanyName = "CGC Cards",
+        Version = "cgc-centering-2026.10",
+        Source = "CGC Cards grading scale: centering per grade (front / reverse where stated; unstated grades use the next lower grade's limit)",
+        CenteringLimits =
+        [
+            new(10, 55, 75),
+            new(9.5m, 60, 90),  // not stated: uses 9
+            new(9, 60, 90),
+            new(8.5m, 65, 100), // not stated: uses 8
+            new(8, 65, 100),
+            new(7.5m, 65, 100),
+            new(7, 70, 100),
+            new(6.5m, 75, 100), // not stated: uses 6
+            new(6, 75, 100),
+            new(5.5m, 85, 100), // 5.5 to 4 not stated: use 4.5 and 3.5
+            new(5, 85, 100),
+            new(4.5m, 85, 100),
+            new(4, 90, 100),
+            new(3.5m, 90, 100),
+        ],
+    };
+
+    /// <summary>
+    /// Beckett (BGS). Beckett publishes centering per subgrade, and its overall grade can be at most one point above
+    /// the lowest subgrade (a 10 needs every subgrade at 9.5 or better). So the limit for overall grade G is the
+    /// centering subgrade G − 1 allows. Subgrade figures are from Rare Candy's guide to Beckett grading (June 2024),
+    /// because beckett.com/grading/scale was down for maintenance on 12 Oct 2026; check them against it.
+    /// Beckett states centering as "one way / the other way"; the looser of the two is used here.
+    /// </summary>
+    public static GradingProfile BgsCentering { get; } = new()
+    {
+        Id = "bgs-centering",
+        CompanyCode = "BGS",
+        CompanyName = "Beckett Grading Services",
+        Version = "bgs-centering-2026.10",
+        Source = "Beckett centering subgrades (via Rare Candy's guide, to be checked against beckett.com) and the one-point rule from subgrade to overall grade",
+        CenteringLimits =
+        [
+            new(10, 55, 60),   // subgrade 9.5
+            new(9.5m, 60, 80), // subgrade 8.5 (as 8)
+            new(9, 60, 80),    // subgrade 8
+            new(8.5m, 65, 90), // subgrade 7.5 (as 7)
+            new(8, 65, 90),    // subgrade 7
+            new(7.5m, 70, 95), // subgrade 6.5 (as 6)
+            new(7, 70, 95),    // subgrade 6
+            new(6.5m, 75, 95), // subgrade 5.5 (as 5)
+            new(6, 75, 95),    // subgrade 5
+            new(5.5m, 80, 100),
+            new(5, 80, 100),   // subgrade 4
+            new(4.5m, 85, 100),
+            new(4, 85, 100),   // subgrade 3
+            new(3.5m, 90, 100),
+            new(3, 90, 100),   // subgrade 2
+        ],
+    };
+
+    public static IReadOnlyList<GradingProfile> BuiltIn { get; } = [PsaCentering, BgsCentering, CgcCentering];
 }

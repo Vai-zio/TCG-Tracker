@@ -249,6 +249,15 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
   WAL mode, clean shutdown and the first automatic backup.
 - **Packaging:** a self-contained `win-x64` publish profile (see [Build, run, test](#build-run-test)).
 
+**Milestone 9 (sales, CSV import, more graders): in progress.**
+- **Sales & trades** screen (`ITransactionService`): record cards leaving the collection with amount, fees,
+  shipping, buyer and platform. Cards become Sold or Traded in the same database transaction. Realised profit is
+  shown per sale, using purchase prices in the same currency only.
+- **Collection CSV import** (`ICollectionImportService`): preview first, then import the ticked lines in one
+  transaction. Duplicate detection by Id (re-imported exports) and by printing + date + price + source, counted
+  against how many matching copies you own, plus repeated lines within the file.
+- **BGS and CGC** centering profiles next to PSA, selectable on Inspection → Assess.
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value.
@@ -264,10 +273,15 @@ Known limitations:
   Milestone 4); marks from past inspections are listed in History but not redrawn on the photo; phone photos are
   shown as stored, so use Rotate if one appears sideways.
 - The bundled OpenCV library is for 64-bit (x64) Windows.
-- Assessment: only PSA's centering tolerances are built in. Other graders (BGS, CGC, SGC, TAG) can be added as
-  profiles once their published standards are checked. Grade prediction from defects needs real graded results
+- Assessment: PSA, BGS and CGC centering tolerances are built in. CGC's come from its grading scale page; BGS's
+  come from a secondary guide (beckett.com was down for maintenance) and should be checked against Beckett's scale.
+  Grades a company gives no figure for use the next lower grade's limit, so the "at most" is never too strict.
+  SGC and TAG can be added the same way. Grade prediction from defects needs real graded results
   to validate against (submission tracking in Milestone 7 will start collecting them).
-- Submissions: realised profit needs sales to be recorded; the transactions table exists but has no screen yet.
+- Sales & trades: cards received in a trade are added to the collection as usual (the sale only records what left).
+  Deleting a sale restores each card's status from its history (graded, inspected or cataloged), since the exact
+  earlier status isn't stored.
+- Collection CSV import: a storage location must exist before a file can refer to it.
 - Valuation: grading fees are typed into the calculator each time; saved fee tiers per company come with the
   database schema work (the `GradingServiceTier` table). TCGdex prices couldn't be fetched live from the build
   environment (tested against the documented example). There's no free, licensed source of completed graded sales,

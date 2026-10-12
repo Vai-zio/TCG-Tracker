@@ -11,14 +11,19 @@ scenes, so the numbers it shows make sense.
   straightens it, reads the text with Windows' built-in OCR, and searches your own collection and TCGdex.
   You confirm the match; nothing is added on a guess. The original photo is kept unchanged.
 
+- **Import from CSV** for a spreadsheet. Choosing a file only checks it: every line shows as New, Extra copy,
+  Likely duplicate or a problem. A likely duplicate is a line with the same Id (from an earlier export) or the same
+  printing, date, price and source as a card you have; those start unticked. **Import ticked lines** adds them all
+  in one go, or nothing if something fails. A Backup & export collection file imports as it is.
+
 ## 2. Inspect condition
 
 **Inspection** shows a card's photos. Mark defects by dragging a box, drag the guides to measure centering, and
 tick which areas (centering, corners, edges, surface) you actually looked at. Saving makes a permanent record:
 later inspections are added next to it, never over it.
 
-**Assess** on a saved inspection runs the rules. With the PSA profile it tells you the **best grade still
-possible** from centering (PSA's published limits) and why. It never predicts a grade or a probability: there
+**Assess** on a saved inspection runs the rules. With the PSA, BGS or CGC profile it tells you the **best grade still
+possible** from centering (the company's published limits) and why. It never predicts a grade or a probability: there
 isn't enough real data behind that yet. Missing photos or areas give "insufficient evidence" plus what to add.
 
 ## 3. Prices and "should I grade it?"
@@ -40,7 +45,15 @@ isn't enough real data behind that yet. Missing photos or areas give "insufficie
 keeps its latest assessment as the prediction. Mark the submission shipped, received and so on as it goes. When
 grades come back, type them in with the certificate numbers and mark it returned. Cards then show as graded.
 
-## 5. Reports
+## 5. Record sales and trades
+
+**Sales & trades → New sale or trade**: tick the cards that left, type what you received, fees and shipping, and
+save. The cards are marked Sold or Traded. The amount is split evenly over the cards unless you give each card its
+share. Profit is what you received after costs minus what the cards cost; a purchase price in another currency
+isn't converted, so the app says the profit is incomplete instead of guessing. Delete a sale entered by mistake and
+its cards go back into the collection.
+
+## 6. Reports
 
 - **Predictions vs real grades**: did the "best grade possible" limit hold? This is how the rules get checked
   against reality. Under 20 cards, treat it as anecdotal.
@@ -48,7 +61,7 @@ grades come back, type them in with the certificate numbers and mark it returned
   are counted, not guessed. The dashboard's value tile shows the same total.
 - Grades received, and cost per submission and per card. Tables export to CSV.
 
-## 6. Backups
+## 7. Backups
 
 **Backup & export → Back up now** writes one `.zip` (database plus photos if ticked) with a checksum for every file.
 A database-only backup is also made automatically once a week at startup. **Check** confirms a backup is intact.

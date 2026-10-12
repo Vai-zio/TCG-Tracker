@@ -1,0 +1,51 @@
+<UserControl x:Class="PokemonCardManager.App.Views.CollectionImportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="Import cards from CSV" Style="{StaticResource PageTitleStyle}" />
+
+        <Border DockPanel.Dock="Top" Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap"
+                           Text="Columns (first line). Required: Set, Number, Name. Optional: Language (en, ja…), Finish, Edition, Rarity, Condition (NM, LP… or Near mint), Status, Location (a storage location's name or path), Acquired, PurchasePrice, PurchaseCurrency, AcquiredFrom, Notes, Quantity. A file from Backup &amp; export → Collection works as it is. Comma or semicolon separated; 12.50 and 12,50 both work; dates are 2026-03-31 or 31-03-2026." />
+                <TextBox Text="{Binding Template, Mode=OneWay}" IsReadOnly="True" Margin="0,8,0,8" FontFamily="Consolas" />
+                <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Checking the file saves nothing. Lines that look like cards you already have (same Id, or same printing, date, price and source) start unticked. Importing adds every ticked line at once, or nothing if something goes wrong." />
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="_Choose file…" Command="{Binding PickFileCommand}" Margin="0,0,8,0" />
+                    <Button Content="Tick _all" Command="{Binding TickAllCommand}" Margin="0,0,8,0"
+                            Visibility="{Binding HasRows, Converter={StaticResource BoolToVisibility}}" />
+                    <Button Content="Tick _none" Command="{Binding TickNoneCommand}" Margin="0,0,8,0"
+                            Visibility="{Binding HasRows, Converter={StaticResource BoolToVisibility}}" />
+                    <Button Content="_Import ticked lines" Command="{Binding ImportCommand}" Style="{StaticResource AccentButtonStyle}" />
+                </StackPanel>
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,8,0,0"
+                           Visibility="{Binding Status, Converter={StaticResource NotEmptyToVisibility}}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Virtualized grid, so a 20,000-line file stays responsive -->
+        <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" AutomationProperties.Name="Import preview"
+                  EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="" Width="36">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanTick}"
+                                      HorizontalAlignment="Center" AutomationProperties.Name="Import this line" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Line" Binding="{Binding Row.Row.LineNumber}" IsReadOnly="True" Width="50" />
+                <DataGridTextColumn Header="Card" Binding="{Binding Row.Row.Card}" IsReadOnly="True" Width="2*" />
+                <DataGridTextColumn Header="Details" Binding="{Binding Details}" IsReadOnly="True" Width="1.5*" />
+                <DataGridTextColumn Header="Result" Binding="{Binding Kind}" IsReadOnly="True" Width="110" />
+                <DataGridTextColumn Header="Why" Binding="{Binding Row.Message}" IsReadOnly="True" Width="3*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>
