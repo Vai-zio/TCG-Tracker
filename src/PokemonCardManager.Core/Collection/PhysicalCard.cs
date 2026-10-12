@@ -1,5 +1,6 @@
 using PokemonCardManager.Core.Catalog;
 using PokemonCardManager.Core.Common;
+using PokemonCardManager.Core.Market;
 
 namespace PokemonCardManager.Core.Collection;
 
@@ -21,6 +22,8 @@ public class PhysicalCard : Entity, IHasTimestamps
 
     public Guid? StorageLocationId { get; set; }
     public StorageLocation? StorageLocation { get; set; }
+    /// <summary>Spot inside the location, e.g. "page 14, slot 3", so you can find the card fast.</summary>
+    public string? StoragePosition { get; set; }
 
     public WorkflowStatus Status { get; set; } = WorkflowStatus.Cataloged;
     public RawCondition RawCondition { get; set; } = RawCondition.Unknown;
@@ -28,6 +31,15 @@ public class PhysicalCard : Entity, IHasTimestamps
     /// <summary>Latest raw value estimate. Full price history lives in PriceObservation.</summary>
     public decimal? EstimatedRawValue { get; set; }
     public string? EstimatedRawValueCurrency { get; set; }
+
+    /// <summary>
+    /// The slab this card is in right now, if it has been graded. Empty for raw cards.
+    /// The full grading history lives in SubmissionItem; this is the quick "what is it now".
+    /// </summary>
+    public Guid? GradingCompanyId { get; set; }
+    public GradingCompany? GradingCompany { get; set; }
+    public decimal? Grade { get; set; }
+    public string? CertificationNumber { get; set; }
 
     public string? Notes { get; set; }
 

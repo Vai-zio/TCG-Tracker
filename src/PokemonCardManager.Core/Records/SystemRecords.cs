@@ -43,6 +43,9 @@ public class BackupRecord : Entity
     /// <summary>Latest migration applied when the backup was made.</summary>
     public required string SchemaVersion { get; set; }
     public bool IncludesImages { get; set; }
+    public bool IsEncrypted { get; set; }
+    /// <summary>Last time the backup file was re-hashed and matched <see cref="Sha256"/>.</summary>
+    public DateTime? VerifiedAt { get; set; }
 }
 
 public enum AuditAction { Created, Updated, Deleted }

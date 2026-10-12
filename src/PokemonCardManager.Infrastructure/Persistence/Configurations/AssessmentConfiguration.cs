@@ -28,9 +28,18 @@ internal sealed class ConditionAssessmentConfiguration : IEntityTypeConfiguratio
         assessment.HasMany(a => a.Defects).WithOne()
             .HasForeignKey(d => d.ConditionAssessmentId).OnDelete(DeleteBehavior.Cascade);
 
-        assessment.ToTable(t => t.HasCheckConstraint(
-            "CK_ConditionAssessments_GradeRange",
-            "\"EstimatedGradeLow\" IS NULL OR \"EstimatedGradeHigh\" IS NULL OR \"EstimatedGradeLow\" <= \"EstimatedGradeHigh\""));
+        assessment.ToTable(t =>
+        {
+            t.HasCheckConstraint(
+                "CK_ConditionAssessments_GradeRange",
+                "\"EstimatedGradeLow\" IS NULL OR \"EstimatedGradeHigh\" IS NULL OR \"EstimatedGradeLow\" <= \"EstimatedGradeHigh\"");
+            // An estimate is meaningless without the company scale it's on.
+            t.HasCheckConstraint(
+                "CK_ConditionAssessments_GradeHasCompany",
+                "(\"EstimatedGradeLow\" IS NULL AND \"EstimatedGradeHigh\" IS NULL) OR \"GradingCompanyId\" IS NOT NULL");
+            t.Grade(nameof(ConditionAssessment.EstimatedGradeLow), nameof(ConditionAssessment.EstimatedGradeHigh));
+            t.Fraction(nameof(ConditionAssessment.Confidence));
+        });
     }
 }
 
@@ -42,6 +51,12 @@ internal sealed class CenteringMeasurementConfiguration : IEntityTypeConfigurati
         measurement.Property(m => m.Method).HasMaxLength(500);
         measurement.HasOne(m => m.CardImage).WithMany()
             .HasForeignKey(m => m.CardImageId).OnDelete(DeleteBehavior.Restrict);
+        measurement.ToTable(t =>
+        {
+            t.NonNegative(nameof(CenteringMeasurement.LeftBorder), nameof(CenteringMeasurement.RightBorder),
+                nameof(CenteringMeasurement.TopBorder), nameof(CenteringMeasurement.BottomBorder));
+            t.Fraction(nameof(CenteringMeasurement.Confidence));
+        });
     }
 }
 
@@ -63,6 +78,17 @@ internal sealed class DefectConfiguration : IEntityTypeConfiguration<Defect>
         defect.HasIndex(d => d.ConditionAssessmentId);
         defect.HasOne(d => d.CardImage).WithMany()
             .HasForeignKey(d => d.CardImageId).OnDelete(DeleteBehavior.Restrict);
-        defect.ToTable(t => t.HasCheckConstraint("CK_Defects_Severity", "\"Severity\" BETWEEN 0 AND 5"));
+        defect.ToTable(t =>
+        {
+            t.HasCheckConstraint("CK_Defects_Severity", "\"Severity\" BETWEEN 0 AND 5");
+            // Box values are fractions of the photo (0–1), so they survive resizing.
+            t.Fraction(nameof(Defect.BoxX), nameof(Defect.BoxY), nameof(Defect.BoxWidth), nameof(Defect.BoxHeight),
+                nameof(Defect.Confidence));
+            // A box is all four numbers or none.
+            t.HasCheckConstraint("CK_Defects_BoxComplete",
+                "(\"BoxX\" IS NULL) = (\"BoxY\" IS NULL) AND (\"BoxX\" IS NULL) = (\"BoxWidth\" IS NULL) AND (\"BoxX\" IS NULL) = (\"BoxHeight\" IS NULL)");
+            t.HasCheckConstraint("CK_Defects_BoxInsideImage",
+                "\"BoxX\" IS NULL OR (\"BoxX\" + \"BoxWidth\" <= 1 AND \"BoxY\" + \"BoxHeight\" <= 1)");
+        });
     }
 }
