@@ -75,7 +75,10 @@ public sealed record InspectionSummary(
     int WorstSeverity,
     string? Centering,
     bool InsufficientEvidence,
-    ReviewStatus ReviewStatus);
+    ReviewStatus ReviewStatus,
+    /// <summary>Upper limit from a rule-based assessment (e.g. PSA 9), never a prediction. Null for inspections.</summary>
+    decimal? MaxGrade = null,
+    string? GradingCompanyCode = null);
 
 public sealed record InspectionDetails(
     InspectionSummary Summary,

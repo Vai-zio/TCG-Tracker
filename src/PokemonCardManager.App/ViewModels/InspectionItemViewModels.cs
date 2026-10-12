@@ -129,11 +129,15 @@ public sealed class InspectionHistoryItemViewModel(InspectionSummary summary, II
     public static IReadOnlyList<Option<ReviewStatus>> Reviews { get; } = Options.ForEnumRequired<ReviewStatus>();
 
     public InspectionSummary Summary { get; } = summary;
-    public string Title => $"{Summary.AssessedAt.ToLocalTime():d MMM yyyy HH:mm} · {Summary.Inspector}";
+    public string Title => $"{Kind} · {Summary.AssessedAt.ToLocalTime():d MMM yyyy HH:mm} · {Summary.Inspector}";
     public string Subtitle
     {
         get
         {
+            if (!IsManual)
+                return Summary.MaxGrade is { } max
+                    ? $"Rule-based assessment · best still possible: {Summary.GradingCompanyCode} {max:0.#} (upper limit, not a prediction)"
+                    : "Rule-based assessment · description only, no grade limit";
             var parts = new List<string>
             {
                 Summary.DefectCount == 0 ? "No defects recorded" : $"{Summary.DefectCount} defect(s), worst {Summary.WorstSeverity}/5",
@@ -144,6 +148,8 @@ public sealed class InspectionHistoryItemViewModel(InspectionSummary summary, II
         }
     }
     public bool IsLimited => Summary.InsufficientEvidence;
+    public bool IsManual => Summary.Method == AssessmentMethod.ManualInspection;
+    public string Kind => IsManual ? "Inspection" : "Assessment";
 
     public bool IsExpanded
     {

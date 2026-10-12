@@ -291,7 +291,18 @@
                                 <TextBlock Text="{Binding Status}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,8,0,0"
                                            Visibility="{Binding Status, Converter={StaticResource NotEmptyToVisibility}}" />
                                 <TextBlock Style="{StaticResource SubtleTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"
-                                           Text="This records what you saw. It is not a grade; grade estimates come with the assessment engine later." />
+                                           Text="This records what you saw. It is not a grade. After saving, use Assess to check it against a grader's published limits." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Assessment" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Choose Assess on a saved inspection below. Limits come only from what the grader publishes (for PSA: centering tolerances), so you get the best grade still possible, never a predicted grade." />
+                                <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" AutomationProperties.Name="Assessment profile" />
+                                <TextBlock Text="{Binding AssessmentText}" TextWrapping="Wrap" FontSize="12" Margin="0,10,0,0"
+                                           Visibility="{Binding AssessmentText, Converter={StaticResource NotEmptyToVisibility}}" />
                             </StackPanel>
                         </Border>
 
@@ -315,6 +326,10 @@
                                                     </Border>
                                                     <DockPanel Margin="0,8,0,0">
                                                         <CheckBox DockPanel.Dock="Left" Content="Details" IsChecked="{Binding IsExpanded}" VerticalAlignment="Center" />
+                                                        <Button DockPanel.Dock="Left" Content="Assess" Margin="8,0,0,0"
+                                                                Visibility="{Binding IsManual, Converter={StaticResource BoolToVisibility}}"
+                                                                Command="{Binding DataContext.AssessCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}" ToolTip="Run the rule-based assessment on this inspection" />
                                                         <ComboBox ItemsSource="{Binding Source={x:Static vm:InspectionHistoryItemViewModel.Reviews}}"
                                                                   SelectedItem="{Binding Review}" Width="160" HorizontalAlignment="Right"
                                                                   ToolTip="Review status: the only thing you can change on a saved inspection" />

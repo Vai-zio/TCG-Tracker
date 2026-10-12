@@ -130,7 +130,7 @@ public sealed class InspectionService(
     {
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         var assessments = await db.ConditionAssessments.AsNoTracking()
-            .Include(a => a.Defects).Include(a => a.CenteringMeasurements)
+            .Include(a => a.Defects).Include(a => a.CenteringMeasurements).Include(a => a.GradingCompany)
             .Where(a => a.PhysicalCardId == physicalCardId)
             .ToListAsync(cancellationToken);
         return assessments.OrderByDescending(a => a.AssessedAt).Select(ToSummary).ToList();
@@ -140,7 +140,7 @@ public sealed class InspectionService(
     {
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         var a = await db.ConditionAssessments.AsNoTracking()
-            .Include(x => x.Defects).Include(x => x.CenteringMeasurements).Include(x => x.Findings)
+            .Include(x => x.Defects).Include(x => x.CenteringMeasurements).Include(x => x.Findings).Include(x => x.GradingCompany)
             .FirstOrDefaultAsync(x => x.Id == assessmentId, cancellationToken);
         if (a is null) return null;
 
@@ -232,7 +232,9 @@ public sealed class InspectionService(
         a.CenteringMeasurements.Count == 0 ? null : string.Join("; ", a.CenteringMeasurements.OrderBy(m => m.Side).Select(m =>
             $"{m.Side} {CenteringCalculator.Calculate(new(m.LeftBorder, m.RightBorder, m.TopBorder, m.BottomBorder)).Worse}")),
         a.InsufficientEvidence,
-        a.ReviewStatus);
+        a.ReviewStatus,
+        a.EstimatedGradeHigh,
+        a.GradingCompany?.Code);
 
     private static string Truncate(string text, int max) => text.Length <= max ? text : text[..(max - 1)] + "…";
 }

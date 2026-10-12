@@ -10,6 +10,7 @@ using PokemonCardManager.Core.Validation;
 using PokemonCardManager.Core.Identification;
 using PokemonCardManager.Core.Inspection;
 using PokemonCardManager.Infrastructure.Catalogs;
+using PokemonCardManager.Infrastructure.Grading;
 using PokemonCardManager.Infrastructure.Imaging;
 using PokemonCardManager.Infrastructure.Images;
 using PokemonCardManager.Infrastructure.Options;
@@ -28,6 +29,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.SectionName));
+        services.AddOptions<GradingOptions>().Bind(configuration.GetSection(GradingOptions.SectionName));
         services.AddOptions<CatalogOptions>().Bind(configuration.GetSection(CatalogOptions.SectionName));
         services.AddOptions<ImageQualityThresholds>().Bind(configuration.GetSection(ImageQualityThresholds.SectionName));
 
@@ -58,6 +60,7 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<InspectionInput>, InspectionInputValidator>();
         services.AddSingleton<IImageAnalyzer, OpenCvImageAnalyzer>();
         services.AddSingleton<IInspectionService, InspectionService>();
+        services.AddSingleton<IAssessmentService, AssessmentService>();
 
         // Identification. The app registers Windows OCR before calling this; elsewhere OCR is reported as unavailable.
         services.TryAddSingleton<IOcrEngine, UnavailableOcrEngine>();

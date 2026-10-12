@@ -33,6 +33,7 @@ Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManage
 | `Collection:DefaultCurrency` | Currency pre-filled for purchase prices, e.g. `DKK`. |
 | `Catalogs:TcgdexEnabled` | Look cards up online in TCGdex. `false` keeps identification fully offline (your own collection only). |
 | `Catalogs:TimeoutSeconds` | How long to wait for TCGdex before carrying on without it. |
+| `Grading:DefectRules` | Your own rules that cap a grade, e.g. `{ "ProfileId": "psa-centering", "Type": "Crease", "MinSeverity": 4, "MaxGrade": 5, "Note": "my experience" }`. Empty by default. |
 | `ImageQuality:*` | Limits for the photo quality check (`MinShortSide`, `MinSharpness`, `GoodSharpness`, `MinBrightness`, `MaxBrightness`, `MaxBrightClipped`). |
 | `Logging:LogLevel` | How much to log. |
 
@@ -159,6 +160,20 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
 - Confirming creates the card, imports the photo unchanged as the original, stores the straightened crop as a
   derived image, and records the TCGdex id and set size on the printing.
 
+**Milestone 5 (grading assessment): done.**
+- Rule-based engine (`Core/Grading/AssessmentEngine`): describes each area (centering, corners, edges, surface)
+  separately from the inspection, using the worst defect per area. Areas are never added up into a score.
+- Grading profiles (`GradingProfile`, with `GradingProfiles.BuiltIn`): the PSA profile holds PSA's published
+  centering tolerances per grade (front/back, e.g. PSA 10 ≈ 55/45 front and 75/25 back). The engine reports the
+  **best grade still possible** (an upper limit) and why, and flags results within the measuring margin of a limit.
+  It never gives a predicted grade, a lower bound or a probability: there's no validated data for that yet.
+  Defect-based limits only come from rules you configure.
+- Evidence and uncertainty: missing areas, missing back/front/angled-light photos and poor photos make the result
+  "insufficient evidence" and turn into concrete next steps. Every result carries the "not an official grade" statement.
+- Results are saved as their own permanent records (method "rule-based", version `rules-1+psa-centering-2026.10`,
+  review status "not reviewed") next to the inspection, so predictions can later be compared with real grades.
+- In the app: Inspection → History → **Assess** on a saved inspection, with the profile chosen above it.
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value (comes with valuation in Milestone 6).
@@ -171,6 +186,9 @@ Known limitations:
   Milestone 4); marks from past inspections are listed in History but not redrawn on the photo; phone photos are
   shown as stored, so use Rotate if one appears sideways.
 - The bundled OpenCV library is for 64-bit (x64) Windows.
+- Assessment: only PSA's centering tolerances are built in. Other graders (BGS, CGC, SGC, TAG) can be added as
+  profiles once their published standards are checked. Grade prediction from defects needs real graded results
+  to validate against (submission tracking in Milestone 7 will start collecting them).
 - Identification: the TCGdex client was written from TCGdex's documentation and tested against documented response
   shapes, but couldn't be called live from the build environment; try it once and report anything odd. Set symbols
   aren't recognised (the number and set size do that job). Finish (holo, reverse holo) and edition can't be told
@@ -183,7 +201,7 @@ Known limitations:
 2. ~~Collection management~~
 3. ~~Image inspection~~
 4. ~~Identification~~
-5. Grading assessment: rule-based engine, evidence and confidence reporting, company profiles
+5. ~~Grading assessment~~
 6. Valuation: price history, manual entry and CSV import, expected value and break-even
 7. Submission tracking and reports
 8. Backups, restore, large-dataset testing, packaging

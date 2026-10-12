@@ -6,6 +6,7 @@ using PokemonCardManager.App.Navigation;
 using PokemonCardManager.Core.Assessment;
 using PokemonCardManager.Core.Collection;
 using PokemonCardManager.Core.Common;
+using PokemonCardManager.Core.Grading;
 using PokemonCardManager.Core.Inspection;
 using PokemonCardManager.Core.Services;
 
@@ -24,6 +25,9 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     private readonly IImageService _images;
     private readonly ICollectionService _collection;
     private readonly NavigationService _navigation;
+    private readonly IAssessmentService _assessments;
+    private Option<string?> _profile;
+    private string? _assessmentText;
 
     private Guid? _cardId;
     private string _cardTitle = "";
@@ -45,8 +49,13 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     private bool _isCheckingQuality;
 
     public InspectionViewModel(IInspectionService inspections, IImageService images, ICollectionService collection,
-        NavigationService navigation)
+        NavigationService navigation, IAssessmentService assessments)
     {
+        _assessments = assessments;
+        Profiles = [.. assessments.Profiles.Select(p => new Option<string?>($"{p.CompanyCode} limits ({p.Source})", p.Id)),
+            new Option<string?>("Description only (no grade limits)", null)];
+        _profile = Profiles[0];
+        AssessCommand = new AsyncRelayCommand<InspectionHistoryItemViewModel>(AssessAsync);
         _inspections = inspections;
         _images = images;
         _collection = collection;
@@ -199,6 +208,12 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     public string? Status { get => _status; private set => SetProperty(ref _status, value); }
 
     public ObservableCollection<InspectionHistoryItemViewModel> History { get; } = [];
+
+    // Rule-based assessment of a saved inspection
+    public IReadOnlyList<Option<string?>> Profiles { get; }
+    public Option<string?> Profile { get => _profile; set => SetProperty(ref _profile, value); }
+    public string? AssessmentText { get => _assessmentText; private set => SetProperty(ref _assessmentText, value); }
+    public ICommand AssessCommand { get; }
     public bool HistoryIsEmpty => History.Count == 0;
 
     public bool HasUnsavedChanges =>
@@ -383,6 +398,43 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
         OnPropertyChanged(nameof(HasUnsavedChanges));
         Status = $"Inspection saved at {DateTime.Now:HH:mm}. It's now part of this card's history.";
         await LoadHistoryAsync();
+    }
+
+    private async Task AssessAsync(InspectionHistoryItemViewModel? item)
+    {
+        if (item is null || !item.IsManual) return;
+        try
+        {
+            var saved = await _assessments.AssessAsync(item.Summary.Id, Profile.Value);
+            AssessmentText = Describe(saved.Outcome);
+        }
+        catch (DomainRuleViolationException ex)
+        {
+            AssessmentText = ex.Message;
+            return;
+        }
+        await LoadHistoryAsync();
+    }
+
+    /// <summary>The outcome as short readable text: status, limit and why, what's uncertain, what to do next.</summary>
+    private static string Describe(AssessmentOutcome o)
+    {
+        var lines = new List<string>
+        {
+            o.Status == AssessmentStatus.Complete ? "Complete: all areas inspected on adequate photos." : "Partial: some evidence is missing (see below).",
+        };
+        lines.AddRange(o.Categories.Select(c => $"{c.Category}: {c.Description}"));
+        if (o.Profile is { } p)
+        {
+            lines.Add(o.MaxGrade is { } max
+                ? $"Best grade still possible: {p.CompanyCode} {max:0.#}. This is an upper limit, not a prediction."
+                : $"Nothing found limits the {p.CompanyCode} grade, which doesn't mean it will grade highly.");
+            lines.AddRange(o.Ceilings.Select(c => "• " + c.Reason + (c.NearLimit ? " (close to the limit)" : "")));
+        }
+        if (o.Uncertainties.Count > 0) lines.Add("Uncertain: " + string.Join(" ", o.Uncertainties));
+        lines.Add("Next: " + string.Join(" ", o.Recommendations));
+        lines.Add(AssessmentOutcome.Disclaimer);
+        return string.Join("\n", lines);
     }
 
     private Task BackAsync() => _cardId is { } id
