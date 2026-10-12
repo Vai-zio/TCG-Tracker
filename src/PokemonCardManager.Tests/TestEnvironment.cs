@@ -32,6 +32,9 @@ public sealed class TestEnvironment : IAsyncLifetime
     /// <summary>A folder for test input files (outside the app's data folder).</summary>
     public string ScratchDirectory => Directory.CreateDirectory(Path.Combine(_directory, "scratch")).FullName;
 
+    /// <summary>Extra registrations made before the app wiring, e.g. a fake OCR engine or catalog.</summary>
+    public Action<IServiceCollection>? ConfigureServices { get; init; }
+
     public async Task InitializeAsync()
     {
         var configuration = new ConfigurationBuilder()
@@ -40,12 +43,15 @@ public sealed class TestEnvironment : IAsyncLifetime
                 ["Storage:DataDirectory"] = _directory,
                 ["Storage:DatabaseFileName"] = "test.db",
                 ["Storage:MaxImageSizeMegabytes"] = "1",
+                ["Catalogs:TcgdexEnabled"] = "false", // tests never call live services
             })
             .Build();
 
-        _services = new ServiceCollection()
+        var services = new ServiceCollection()
             .AddLogging(b => b.SetMinimumLevel(LogLevel.Warning))
-            .AddSingleton<IClock>(Clock) // registered first, so AddInfrastructure keeps it
+            .AddSingleton<IClock>(Clock); // registered first, so AddInfrastructure keeps it
+        ConfigureServices?.Invoke(services);
+        _services = services
             .AddInfrastructure(configuration)
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
 

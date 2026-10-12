@@ -99,6 +99,65 @@ public sealed class ImageService(
         return ToInfo(image);
     }
 
+    public async Task<CardImageInfo> AddDerivedAsync(Guid originalImageId, byte[] content, string extension, string description,
+        CancellationToken cancellationToken = default)
+    {
+        extension = extension.ToLowerInvariant();
+        if (!AllowedTypes.TryGetValue(extension, out var expectedType))
+            throw new ImageImportException($"'{extension}' isn't a supported image type.");
+        if (content.Length == 0) throw new ImageImportException("The derived image is empty.");
+
+        ImageMetadata? metadata;
+        using (var stream = new MemoryStream(content, writable: false))
+            metadata = ImageMetadata.TryRead(stream);
+        if (metadata is null || !string.Equals(metadata.FileType, expectedType, StringComparison.OrdinalIgnoreCase))
+            throw new ImageImportException("The derived image couldn't be read back. It was not saved.");
+
+        await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var original = await db.CardImages.AsNoTracking().FirstOrDefaultAsync(i => i.Id == originalImageId, cancellationToken)
+                       ?? throw new ImageImportException("The original photo no longer exists.");
+
+        var image = new CardImage
+        {
+            PhysicalCardId = original.PhysicalCardId,
+            Kind = original.Kind,
+            Side = original.Side,
+            StorageKey = "",
+            Sha256 = Convert.ToHexStringLower(SHA256.HashData(content)),
+            OriginalImageId = original.Id,
+            DerivationDescription = description,
+            Width = metadata.Width,
+            Height = metadata.Height,
+            FileSizeBytes = content.Length,
+            ContentType = metadata.MimeType,
+            CapturedAt = original.CapturedAt,
+            ImportedAt = clock.UtcNow,
+        };
+        if (await db.CardImages.AnyAsync(i => i.PhysicalCardId == image.PhysicalCardId && i.Sha256 == image.Sha256, cancellationToken))
+            throw new ImageImportException("This image is already attached to the card.");
+
+        image.StorageKey = $"{image.ImportedAt:yyyy}/{image.ImportedAt:MM}/{image.Id:N}{extension}";
+        var destination = files.GetFullPath(image.StorageKey);
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+        var temp = destination + ".importing";
+        try
+        {
+            await File.WriteAllBytesAsync(temp, content, cancellationToken);
+            File.Move(temp, destination);
+            db.CardImages.Add(image);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            File.Delete(temp);
+            if (db.Entry(image).State != EntityState.Unchanged) File.Delete(destination);
+            throw;
+        }
+
+        logger.LogInformation("Added derived image {ImageId} ({Description}) from {OriginalImageId}", image.Id, description, original.Id);
+        return ToInfo(image);
+    }
+
     public async Task<IReadOnlyList<CardImageInfo>> GetImagesAsync(Guid physicalCardId, CancellationToken cancellationToken = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);

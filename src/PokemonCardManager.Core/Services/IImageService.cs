@@ -18,6 +18,13 @@ public interface IImageService
     Task<CardImageInfo> ImportAsync(Guid physicalCardId, string sourceFilePath, ImageKind kind, CardSide side,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Stores an image made from an original (e.g. a straightened crop). It is linked to the original,
+    /// which can't be deleted while derivatives exist. Same checks as import apart from the source being bytes.
+    /// </summary>
+    Task<CardImageInfo> AddDerivedAsync(Guid originalImageId, byte[] content, string extension, string description,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<CardImageInfo>> GetImagesAsync(Guid physicalCardId, CancellationToken cancellationToken = default);
 
     /// <summary>Absolute path of a stored image. Throws if the key points outside image storage.</summary>
