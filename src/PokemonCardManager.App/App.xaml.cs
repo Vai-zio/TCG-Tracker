@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PokemonCardManager.App.Dialogs;
 using PokemonCardManager.App.Navigation;
+using PokemonCardManager.App.Theming;
 using PokemonCardManager.App.ViewModels;
 using PokemonCardManager.App.Views;
 using PokemonCardManager.Core.Services;
@@ -48,11 +49,14 @@ public partial class App : Application
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<NavigationService>();
+        builder.Services.AddSingleton<ThemeService>();
         builder.Services.AddSingleton<ShellViewModel>();
         builder.Services.AddSingleton<ShellWindow>();
         builder.Services.AddSingleton<CollectionViewModel>(); // singleton: keeps filters between visits
         builder.Services.AddTransient<CardEditorViewModel>();  // transient: a fresh form each time
         builder.Services.AddTransient<StorageLocationsViewModel>();
+        builder.Services.AddTransient<DashboardViewModel>();
+        builder.Services.AddTransient<SettingsViewModel>();
 
         _host = builder.Build();
         var logger = _host.Services.GetRequiredService<ILogger<App>>();
@@ -62,6 +66,7 @@ public partial class App : Application
         {
             await _host.StartAsync();
             await _host.Services.GetRequiredService<IDatabaseInitializer>().InitializeAsync();
+            await _host.Services.GetRequiredService<ThemeService>().LoadAsync(); // before the window shows, so it never flashes the wrong theme
         }
         catch (Exception ex)
         {
@@ -75,7 +80,7 @@ public partial class App : Application
         var window = _host.Services.GetRequiredService<ShellWindow>();
         MainWindow = window;
         window.Show();
-        await _host.Services.GetRequiredService<NavigationService>().NavigateToAsync<CollectionViewModel>();
+        await _host.Services.GetRequiredService<NavigationService>().NavigateToAsync<DashboardViewModel>();
         logger.LogInformation("Started, database at {DatabasePath}",
             _host.Services.GetRequiredService<IOptions<StorageOptions>>().Value.ResolveDatabasePath());
     }

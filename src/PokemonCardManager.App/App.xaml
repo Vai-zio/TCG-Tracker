@@ -9,17 +9,24 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Theme.xaml" />
+                <!-- [0] colours: swapped at runtime by ThemeService (Dark.xaml or Light.xaml) -->
+                <ResourceDictionary Source="Resources/Themes/Dark.xaml" />
+                <!-- [1] control styles: shapes and spacing, colours via DynamicResource -->
+                <ResourceDictionary Source="Resources/Controls.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <conv:EnumToTextConverter x:Key="EnumToText" />
             <conv:NotEmptyToVisibilityConverter x:Key="NotEmptyToVisibility" />
+            <conv:EmptyToVisibilityConverter x:Key="EmptyToVisibility" />
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
             <!--
                 How navigation finds a view: when the shell shows a ViewModel,
                 WPF looks up the DataTemplate for its type and creates that view.
             -->
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+                <views:DashboardView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:CollectionViewModel}">
                 <views:CollectionView />
             </DataTemplate>
@@ -28,6 +35,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:StorageLocationsViewModel}">
                 <views:StorageLocationsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                <views:SettingsView />
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

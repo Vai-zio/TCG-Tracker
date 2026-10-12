@@ -1,0 +1,57 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Light theme colours: same keys as Dark.xaml. Pastels are used as soft fills here;
+        text uses deeper tones of the same hues so it stays readable on a light background.
+    -->
+    <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F7F5FF" Offset="0" />
+        <GradientStop Color="#F3F0FB" Offset="0.55" />
+        <GradientStop Color="#EEF6FF" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Glow1Brush" Color="#B9A6FF" Opacity="0.45" />
+    <SolidColorBrush x:Key="Glow2Brush" Color="#FFC2DD" Opacity="0.45" />
+    <SolidColorBrush x:Key="Glow3Brush" Color="#B5F0E1" Opacity="0.45" />
+
+    <SolidColorBrush x:Key="SidebarBrush" Color="#8CFFFFFF" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#B3FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#E6FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceSolidBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="InputBrush" Color="#CCFFFFFF" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#E3DFF2" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="#CFC8EA" />
+    <LinearGradientBrush x:Key="GlassEdgeBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFFFFFF" Offset="0" />
+        <GradientStop Color="#E3DFF2" Offset="0.6" />
+        <GradientStop Color="#D9D3EE" Offset="1" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="TextBrush" Color="#25213B" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#6B6687" />
+    <SolidColorBrush x:Key="SubtleTextBrush" Color="#9893B0" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#C9BCFF" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#B9A8FF" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#2D2366" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#6A55D6" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#33A08BFF" />
+
+    <SolidColorBrush x:Key="LavenderBrush" Color="#6A55D6" />
+    <SolidColorBrush x:Key="LavenderSoftBrush" Color="#E9E4FF" />
+    <SolidColorBrush x:Key="MintBrush" Color="#11866A" />
+    <SolidColorBrush x:Key="MintSoftBrush" Color="#D9F7EC" />
+    <SolidColorBrush x:Key="PeachBrush" Color="#B9602A" />
+    <SolidColorBrush x:Key="PeachSoftBrush" Color="#FFEADB" />
+    <SolidColorBrush x:Key="PinkBrush" Color="#B8337A" />
+    <SolidColorBrush x:Key="PinkSoftBrush" Color="#FDE2F0" />
+    <SolidColorBrush x:Key="SkyBrush" Color="#2470B3" />
+    <SolidColorBrush x:Key="SkySoftBrush" Color="#DEF0FF" />
+    <SolidColorBrush x:Key="LemonBrush" Color="#8A6A00" />
+    <SolidColorBrush x:Key="LemonSoftBrush" Color="#FFF5CC" />
+
+    <SolidColorBrush x:Key="DangerBrush" Color="#C23B4B" />
+    <SolidColorBrush x:Key="DangerSoftBrush" Color="#FDE2E5" />
+    <SolidColorBrush x:Key="SelectionBrush" Color="#E3DCFF" />
+    <SolidColorBrush x:Key="RowAltBrush" Color="#66F6F4FD" />
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="#CFC8EA" />
+</ResourceDictionary>

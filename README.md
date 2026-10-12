@@ -15,6 +15,9 @@ dotnet test                                     # run all tests
 dotnet run --project src/PokemonCardManager.App # start the app (Windows)
 ```
 
+Run these from the repository root (the folder with `PokemonCardManager.sln`). A plain `dotnet run`
+there fails because the root holds a solution, not a runnable project; `--project` says which one to start.
+
 On first start the database is created at `%LocalAppData%\PokemonCardManager\collection.db`.
 Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManager\logs\`.
 
@@ -52,7 +55,10 @@ App (WPF, MVVM) ──► Core ◄── Infrastructure (EF Core + SQLite)
   (configuration + logging + dependency injection), upgrades the database, then opens the window.
   - *Navigation* is "ViewModel first": `NavigationService` swaps the current ViewModel and the
     DataTemplates in `App.xaml` pick the matching view. Pages with unsaved edits are asked about first.
-  - *Styles* live in `Resources/Theme.xaml` (colours, buttons, inputs, tables), so screens look consistent.
+  - *Themes*: `Resources/Themes/Dark.xaml` and `Light.xaml` hold only colours (same keys in both).
+    `Resources/Controls.xaml` holds the shapes (pill buttons, glass panels, inputs, tables) and points
+    at colours with `DynamicResource`. `ThemeService` swaps the colour file at runtime, so every
+    `DynamicResource` repaints instantly. The choice is saved in the `AppSettings` table.
 - **Tests**: xUnit. Unit tests for Core rules; integration tests that run the real app wiring
   against a temporary SQLite file.
 
@@ -115,6 +121,11 @@ backups, audit log), and tests.
   unsaved-changes warning.
 - Photos: import JPEG/PNG/BMP/TIFF per card with type and side; originals kept untouched.
 - Storage locations: nested binders/pages/pockets/boxes/shelves, with card counts; safe delete.
+
+**UI redesign: done.** Pastel "glass" look in dark and light themes (switch in Settings or with the
+moon/sun button in the top bar). Sidebar with the screens still to come listed as disabled, global search
+(Ctrl+K), a dashboard (counts, rarity mix, collection health, recent activity) and a thumbnail grid that
+shows each card as a tile. The dashboard's value tile shows "—" until market prices exist (Milestone 6).
 
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters

@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddSingleton<ImageFileStore>();
         services.AddSingleton<IImageService, ImageService>();
         services.AddSingleton<IStorageLocationService, StorageLocationService>();
+        services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IDashboardService, DashboardService>();
         services.AddSingleton<IDatabaseInitializer, DatabaseInitializer>();
         services.AddSingleton<ICollectionService, CollectionService>();
         return services;

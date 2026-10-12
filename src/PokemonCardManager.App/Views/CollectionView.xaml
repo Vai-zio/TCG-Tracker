@@ -18,7 +18,7 @@
         </DockPanel>
 
         <!-- Search and filters -->
-        <Border DockPanel.Dock="Top" Style="{StaticResource CardPanelStyle}" Padding="12" Margin="0,0,0,12">
+        <Border DockPanel.Dock="Top" Style="{StaticResource GlassPanelStyle}" Padding="14" Margin="0,0,0,12">
             <StackPanel>
                 <DockPanel Margin="0,0,0,8">
                     <Button DockPanel.Dock="Right" Content="Clear filters" Command="{Binding ClearFiltersCommand}" Margin="8,0,0,0" />
@@ -48,8 +48,18 @@
                     <ComboBox ItemsSource="{Binding Locations}" SelectedItem="{Binding SelectedLocation}" Width="200" AutomationProperties.Name="Storage location" />
                     <TextBlock Text="Sort by" VerticalAlignment="Center" Margin="8,0,6,4" Style="{StaticResource MutedTextStyle}" />
                     <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort}" Width="150" AutomationProperties.Name="Sort by" />
-                    <CheckBox Content="Descending" IsChecked="{Binding Descending}" Margin="0,0,16,4" />
-                    <CheckBox Content="_Grid view" IsChecked="{Binding ShowGrid}" Margin="0,0,0,4" />
+                    <CheckBox Content="Descending" IsChecked="{Binding Descending}" Margin="0,0,16,4" VerticalAlignment="Center" />
+                    <!-- Grid / Table switch: two radio buttons styled as one pill -->
+                    <Border Style="{StaticResource SegmentTrackStyle}" Margin="0,0,0,4">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource SegmentStyle}" GroupName="View" IsChecked="{Binding ShowGrid}" ToolTip="Grid view">
+                                <TextBlock Text="&#xF0E2;" Style="{StaticResource IconTextStyle}" FontSize="13" />
+                            </RadioButton>
+                            <RadioButton Style="{StaticResource SegmentStyle}" GroupName="View" IsChecked="{Binding ShowTable}" ToolTip="Table view">
+                                <TextBlock Text="&#xE8FD;" Style="{StaticResource IconTextStyle}" FontSize="13" />
+                            </RadioButton>
+                        </StackPanel>
+                    </Border>
                 </WrapPanel>
             </StackPanel>
         </Border>
@@ -72,8 +82,8 @@
             <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}"
                      Visibility="{Binding ShowGrid, Converter={StaticResource BoolToVisibility}}"
                      MouseDoubleClick="OnRowDoubleClick" PreviewKeyDown="OnGridKeyDown"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="{StaticResource SurfaceBrush}"
-                     BorderBrush="{StaticResource BorderBrush}" AutomationProperties.Name="Cards">
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="Transparent"
+                     BorderThickness="0" AutomationProperties.Name="Cards">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel />
@@ -81,15 +91,21 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Width="150" Margin="6">
-                            <Border Height="210" Background="{StaticResource WindowBackgroundBrush}" CornerRadius="4">
-                                <Image Source="{Binding LargeThumbnail, IsAsync=True}" Stretch="Uniform" />
-                            </Border>
-                            <TextBlock Text="{Binding CardName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
-                            <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextTrimming="CharacterEllipsis">
-                                <Run Text="{Binding SetName, Mode=OneWay}" /> <Run Text="#" /><Run Text="{Binding CollectorNumber, Mode=OneWay}" />
-                            </TextBlock>
-                        </StackPanel>
+                        <!-- A glass tile per card: picture, name, set and a pastel condition chip -->
+                        <Border Width="168" Margin="6" Padding="10" Style="{StaticResource GlassTileStyle}">
+                            <StackPanel>
+                                <Border Height="210" Background="{DynamicResource InputBrush}" CornerRadius="10" ClipToBounds="True">
+                                    <Image Source="{Binding LargeThumbnail, IsAsync=True}" Stretch="Uniform" />
+                                </Border>
+                                <TextBlock Text="{Binding CardName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,8,0,0" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding SetName, Mode=OneWay}" /> <Run Text="#" /><Run Text="{Binding CollectorNumber, Mode=OneWay}" />
+                                </TextBlock>
+                                <Border Style="{StaticResource ChipStyle}" Background="{DynamicResource LavenderSoftBrush}" HorizontalAlignment="Left" Margin="0,6,0,0">
+                                    <TextBlock Text="{Binding Condition}" FontSize="11" Foreground="{DynamicResource LavenderBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

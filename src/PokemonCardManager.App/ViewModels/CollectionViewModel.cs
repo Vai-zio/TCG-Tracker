@@ -39,7 +39,7 @@ public sealed class CollectionViewModel : ViewModelBase, INavigationAware
     private int _pageCount = 1;
     private string _summary = "";
     private CardRowViewModel? _selectedRow;
-    private bool _showGrid;
+    private bool _showGrid = true;
 
     public CollectionViewModel(ICollectionService collection, IStorageLocationService locations, IImageService images,
         NavigationService navigation, IDialogService dialogs)
@@ -105,7 +105,7 @@ public sealed class CollectionViewModel : ViewModelBase, INavigationAware
         get => _showGrid;
         set { if (SetProperty(ref _showGrid, value)) OnPropertyChanged(nameof(ShowTable)); }
     }
-    public bool ShowTable => !ShowGrid;
+    public bool ShowTable { get => !ShowGrid; set { if (value) ShowGrid = false; } }
 
     public AsyncRelayCommand RefreshCommand { get; }
     public AsyncRelayCommand NextPageCommand { get; }
@@ -118,6 +118,13 @@ public sealed class CollectionViewModel : ViewModelBase, INavigationAware
     public async Task OnNavigatedToAsync(object? parameter)
     {
         await LoadFilterOptionsAsync();
+        if (parameter is CollectionSearch search)
+        {
+            // Came from the top bar search: show matches across the whole collection.
+            SearchText = search.Text;
+            await LoadPageAsync(1);
+            return;
+        }
         await LoadPageAsync(Page);
     }
 

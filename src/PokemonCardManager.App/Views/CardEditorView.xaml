@@ -37,7 +37,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
             <StackPanel>
                 <!-- The printing -->
-                <Border Style="{StaticResource CardPanelStyle}" Margin="0,0,0,12">
+                <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Text="Card (the printing)" Style="{StaticResource SectionTitleStyle}" />
                         <TextBlock Style="{StaticResource MutedTextStyle}" Margin="0,0,0,10" TextWrapping="Wrap"
@@ -92,7 +92,7 @@
                 </Border>
 
                 <!-- This copy -->
-                <Border Style="{StaticResource CardPanelStyle}" Margin="0,0,0,12">
+                <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Text="Your copy" Style="{StaticResource SectionTitleStyle}" />
                         <WrapPanel>
@@ -132,7 +132,7 @@
                 </Border>
 
                 <!-- Photos -->
-                <Border Style="{StaticResource CardPanelStyle}">
+                <Border Style="{StaticResource GlassPanelStyle}">
                     <StackPanel>
                         <TextBlock Text="Photos" Style="{StaticResource SectionTitleStyle}" />
                         <TextBlock Style="{StaticResource MutedTextStyle}" Margin="0,0,0,10" TextWrapping="Wrap"

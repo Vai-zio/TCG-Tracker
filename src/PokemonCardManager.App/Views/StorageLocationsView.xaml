@@ -28,7 +28,7 @@
                 </DataGrid.Columns>
             </DataGrid>
 
-            <Border Grid.Column="1" Style="{StaticResource CardPanelStyle}" VerticalAlignment="Top">
+            <Border Grid.Column="1" Style="{StaticResource GlassPanelStyle}" VerticalAlignment="Top">
                 <StackPanel>
                     <TextBlock Text="{Binding FormTitle}" Style="{StaticResource SectionTitleStyle}" />
 
