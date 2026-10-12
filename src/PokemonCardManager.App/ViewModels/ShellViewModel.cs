@@ -24,13 +24,14 @@ public sealed class ShellViewModel : ViewModelBase
                 () => navigation.NavigateToAsync<IdentifyViewModel>()),
             new NavItem("Inspection", "", p => p is InspectionViewModel,
                 () => navigation.NavigateToAsync<InspectionViewModel>()),
+            new NavItem("Market & profitability", "\uE8C7", p => p is MarketViewModel,
+                () => navigation.NavigateToAsync<MarketViewModel>()),
             new NavItem("Storage locations", "", p => p is StorageLocationsViewModel,
                 () => navigation.NavigateToAsync<StorageLocationsViewModel>()),
         ];
         // Shown so the plan is visible, but disabled until they're built. No fake screens.
         UpcomingItems =
         [
-            NavItem.Upcoming("Market & profitability", "", "Milestone 6"),
             NavItem.Upcoming("Submissions", "", "Milestone 7"),
             NavItem.Upcoming("Reports", "", "Milestone 7"),
             NavItem.Upcoming("Import / export", "", "Milestone 8"),

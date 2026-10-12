@@ -9,6 +9,7 @@ using PokemonCardManager.Core.Services;
 using PokemonCardManager.Core.Validation;
 using PokemonCardManager.Core.Identification;
 using PokemonCardManager.Core.Inspection;
+using PokemonCardManager.Core.Valuation;
 using PokemonCardManager.Infrastructure.Catalogs;
 using PokemonCardManager.Infrastructure.Grading;
 using PokemonCardManager.Infrastructure.Imaging;
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddOptions<GradingOptions>().Bind(configuration.GetSection(GradingOptions.SectionName));
         services.AddOptions<CatalogOptions>().Bind(configuration.GetSection(CatalogOptions.SectionName));
         services.AddOptions<ImageQualityThresholds>().Bind(configuration.GetSection(ImageQualityThresholds.SectionName));
+        services.AddOptions<ValuationOptions>().Bind(configuration.GetSection(ValuationOptions.SectionName));
 
         services.TryAddSingleton<IClock, SystemClock>();
         services.AddSingleton<HistoryProtectionInterceptor>();
@@ -68,17 +70,24 @@ public static class DependencyInjection
         services.AddSingleton<ICardCatalogProvider, LocalCatalogProvider>(); // searched first: your own data
         if (configuration.GetSection(CatalogOptions.SectionName).Get<CatalogOptions>() is not { TcgdexEnabled: false })
         {
-            services.AddSingleton<ICardCatalogProvider>(provider =>
+            // One HttpClient for all TCGdex calls (catalog and prices), so connections are reused.
+            services.AddKeyedSingleton("TCGdex", (provider, _) =>
             {
-                var options = provider.GetRequiredService<IOptions<CatalogOptions>>();
-                var http = new HttpClient { Timeout = TimeSpan.FromSeconds(options.Value.TimeoutSeconds) };
+                var http = new HttpClient { Timeout = TimeSpan.FromSeconds(provider.GetRequiredService<IOptions<CatalogOptions>>().Value.TimeoutSeconds) };
                 http.DefaultRequestHeaders.UserAgent.ParseAdd("PokemonCardManager/1.0");
-                return new TcgdexCatalogProvider(http, options,
-                    provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TcgdexCatalogProvider>>());
+                return http;
             });
+            services.AddSingleton<ICardCatalogProvider>(provider => ActivatorUtilities.CreateInstance<TcgdexCatalogProvider>(
+                provider, provider.GetRequiredKeyedService<HttpClient>("TCGdex")));
+            services.AddSingleton<IMarketPriceProvider>(provider => ActivatorUtilities.CreateInstance<TcgdexPriceProvider>(
+                provider, provider.GetRequiredKeyedService<HttpClient>("TCGdex")));
         }
         services.AddSingleton<IIdentificationService, IdentificationService>();
         services.AddSingleton<ICollectionService, CollectionService>();
+
+        services.AddSingleton<IValidator<PriceObservationInput>, PriceObservationInputValidator>();
+        services.AddSingleton<IValidator<ExchangeRateInput>, ExchangeRateInputValidator>();
+        services.AddSingleton<IMarketService, MarketService>();
         return services;
     }
 }

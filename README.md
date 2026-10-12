@@ -33,6 +33,9 @@ Photos go to `...\PokemonCardManager\images\` and logs to `...\PokemonCardManage
 | `Collection:DefaultCurrency` | Currency pre-filled for purchase prices, e.g. `DKK`. |
 | `Catalogs:TcgdexEnabled` | Look cards up online in TCGdex. `false` keeps identification fully offline (your own collection only). |
 | `Catalogs:TimeoutSeconds` | How long to wait for TCGdex before carrying on without it. |
+| `Valuation:LookbackDays` | Only prices from this many days back count in summaries (default 365). |
+| `Valuation:StaleAfterDays` | A summary whose newest price is older than this is marked stale (default 90). |
+| `Valuation:MaxRateAgeDays` | Warn when the exchange rate used is this far from a price's date (default 30). |
 | `Grading:DefectRules` | Your own rules that cap a grade, e.g. `{ "ProfileId": "psa-centering", "Type": "Crease", "MinSeverity": 4, "MaxGrade": 5, "Note": "my experience" }`. Empty by default. |
 | `ImageQuality:*` | Limits for the photo quality check (`MinShortSide`, `MinSharpness`, `GoodSharpness`, `MinBrightness`, `MaxBrightness`, `MaxBrightClipped`). |
 | `Logging:LogLevel` | How much to log. |
@@ -109,7 +112,7 @@ A test fails if the model changes without a migration. The app applies new migra
 | MetadataExtractor | Reading image size, type and capture date | Apache 2.0 |
 | OpenCvSharp4 (+ runtime.win in the app, official.runtime.linux-x64 in tests) | Photo quality, card detection, perspective correction | Apache 2.0 (OpenCV itself: Apache 2.0) |
 | Windows.Media.Ocr (part of Windows 10/11, via the `net10.0-windows10.0.19041.0` target) | Reading card text | Included with Windows |
-| TCGdex API (online service, optional) | Card reference data | Data under MIT; not affiliated with Nintendo / The Pokémon Company |
+| TCGdex API (online service, optional) | Card reference data and price estimates (Cardmarket EUR, TCGplayer USD) | Data under MIT; not affiliated with Nintendo / The Pokémon Company |
 | xUnit, Microsoft.NET.Test.Sdk, coverlet | Tests | Apache 2.0 / MIT |
 
 ## Status
@@ -174,6 +177,29 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
   review status "not reviewed") next to the inspection, so predictions can later be compared with real grades.
 - In the app: Inspection → History → **Assess** on a saved inspection, with the profile chosen above it.
 
+**Milestone 6 (valuation): done.**
+- Price history (`IMarketService`): every price is its own row, never overwritten. Each one says whether it's a
+  **completed sale, an asking price or an estimate**, and these are summarised separately: an asking price never
+  counts as a sale. Raw and each graded tier (e.g. PSA 9) are kept apart too.
+- Summaries (`Core/Valuation/PriceStatistics`): median with 25th–75th percentile range (min–max under 4 prices),
+  count and newest date, within a look-back window. Old data is marked stale; thin data gets a warning.
+- Currencies: amounts use `decimal` and the `Money` type, which refuses to add two currencies. Other currencies are
+  converted only with exchange rates you record (Market → Exchange rates), using the rate closest to each price's
+  date; the rate used is shown. No rate means the price is left out with a warning, never silently mixed.
+- Manual entry and **CSV import** with a preview: each line is checked and matched to a printing in your catalog
+  (set + number, with Language/Name to pick between printings). Lines with problems are listed and skipped; the
+  rest are saved in one transaction. Type must be stated on every line; month-first dates are refused as ambiguous.
+- Online prices (`IMarketPriceProvider`): TCGdex includes Cardmarket (EUR) and TCGplayer (USD) figures in its card
+  responses (documented at tcgdex.dev/markets-prices). These are marketplace aggregates for ungraded cards of
+  unknown condition, so they are stored as **estimates**, not sales. Only cards added through "Add from photos" are
+  linked to TCGdex. Refreshing again only adds figures that changed.
+- **Should I grade it?** (`Core/Valuation/GradingProfitCalculator`): compares selling graded with selling raw after
+  grading fee, shipping both ways, insurance, other costs, marketplace fee %, fixed fee and postage. Gives net and
+  extra profit per grade in low/base/high scenarios, the **break-even sale price**, the lowest grade that pays off,
+  and how that changes if graded prices move ±10/20/30%. An **expected value** is only shown when you enter your own
+  grade chances adding up to 100%; the app never invents them. "Fill prices from history" uses completed sales
+  (or estimates when there are none, and says so).
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value (comes with valuation in Milestone 6).
@@ -189,6 +215,10 @@ Known limitations:
 - Assessment: only PSA's centering tolerances are built in. Other graders (BGS, CGC, SGC, TAG) can be added as
   profiles once their published standards are checked. Grade prediction from defects needs real graded results
   to validate against (submission tracking in Milestone 7 will start collecting them).
+- Valuation: grading fees are typed into the calculator each time; saved fee tiers per company come with the
+  database schema work (the `GradingServiceTier` table). TCGdex prices couldn't be fetched live from the build
+  environment (tested against the documented example). There's no free, licensed source of completed graded sales,
+  so graded prices come from your own entries or CSV files.
 - Identification: the TCGdex client was written from TCGdex's documentation and tested against documented response
   shapes, but couldn't be called live from the build environment; try it once and report anything odd. Set symbols
   aren't recognised (the number and set size do that job). Finish (holo, reverse holo) and edition can't be told
@@ -202,6 +232,6 @@ Known limitations:
 3. ~~Image inspection~~
 4. ~~Identification~~
 5. ~~Grading assessment~~
-6. Valuation: price history, manual entry and CSV import, expected value and break-even
+6. ~~Valuation~~
 7. Submission tracking and reports
 8. Backups, restore, large-dataset testing, packaging

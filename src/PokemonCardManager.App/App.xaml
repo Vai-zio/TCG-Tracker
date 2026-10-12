@@ -40,6 +40,9 @@
             <DataTemplate DataType="{x:Type vm:InspectionViewModel}">
                 <views:InspectionView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:MarketViewModel}">
+                <views:MarketView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:StorageLocationsViewModel}">
                 <views:StorageLocationsView />
             </DataTemplate>
