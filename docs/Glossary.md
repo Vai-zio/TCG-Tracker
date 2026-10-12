@@ -1,0 +1,38 @@
+# Glossary
+
+- **Async / await**: lets slow work (database, files) run without freezing the window.
+- **Audit entry**: a log row recording who/what changed. [[Interceptors]]
+- **Binding**: live link between a control and a ViewModel property. [[Data Binding]]
+- **Break-even**: the price or grade where grading earns exactly as much as selling raw. [[Grading Profit]]
+- **CardReference**: one printing of a card. [[Data Model]]
+- **Ceiling**: the best grade a finding still allows. [[Grading Assessment]]
+- **Command (`ICommand`)**: a method wrapped so a button can trigger it. [[MVVM]]
+- **Composition root**: the one place that builds the app. [[Startup]]
+- **Container**: the object that creates classes and hands in what they need. [[Dependency Injection]]
+- **DataTemplate**: XAML rule "for this ViewModel type, draw this View". [[Navigation]]
+- **DbContext**: EF Core's gateway to the database. [[Entity Framework Core]]
+- **DbSet**: one table inside a DbContext.
+- **DynamicResource**: a XAML lookup that updates when the resource changes. [[Themes]]
+- **Entity**: a C# class saved as a table row.
+- **GUID**: a random-looking 128-bit Id that's unique without asking the database.
+- **HttpClient**: .NET's class for calling web APIs.
+- **Index**: a database lookup table that makes searching a column fast.
+- **Interceptor**: code that runs automatically on every save. [[Interceptors]]
+- **Interface**: a list of methods a class promises to have, with no code inside.
+- **Median**: the middle value of a sorted list. [[Valuation]]
+- **Migration**: a saved step that changes the database shape. [[Migrations]]
+- **Mutex**: a system-wide lock; here it stops two copies of the app running. [[Startup]]
+- **ObservableCollection**: a list that tells the screen when items change.
+- **OCR**: reading text from an image. [[Card Identification]]
+- **Options**: a typed class bound to a section of `appsettings.json`. [[Configuration and Logging]]
+- **Percentile**: the value below which a given share of the data falls (25th, 75th). [[Valuation]]
+- **Perspective warp**: stretching a tilted shape back into a flat rectangle. [[OpenCV]]
+- **PhysicalCard**: one copy you own. [[Data Model]]
+- **Regular expression (regex)**: a pattern for matching text, like `\d{1,3}/\d{1,3}`. [[Card Identification]]
+- **SHA-256**: a fingerprint of a file's bytes. [[Photos]]
+- **Singleton / Transient**: one shared instance vs a new one each time. [[Dependency Injection]]
+- **Solution (`.sln`)**: the file that groups all projects.
+- **Transaction**: a group of database changes that all succeed or all fail.
+- **View**: a XAML screen. [[WPF and XAML]]
+- **ViewModel**: the class behind a View holding its data and commands. [[MVVM]]
+- **WAL**: SQLite's crash-safe write mode. [[SQLite]]
