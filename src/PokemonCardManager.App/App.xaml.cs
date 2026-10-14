@@ -74,6 +74,7 @@ public partial class App : Application
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<InspectionViewModel>();
+        builder.Services.AddTransient<GradingReportViewModel>();
         builder.Services.AddTransient<MarketViewModel>();
         builder.Services.AddTransient<SubmissionsViewModel>();
         builder.Services.AddTransient<SalesViewModel>();

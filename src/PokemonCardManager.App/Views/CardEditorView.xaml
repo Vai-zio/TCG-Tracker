@@ -22,6 +22,8 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                 <Button Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="_Inspect" Command="{Binding InspectCommand}" Margin="0,0,8,0" ToolTip="Check photos, mark defects and measure centering" />
+                <Button Content="_Grading report" Command="{Binding GradingReportCommand}" Margin="0,0,8,0"
+                        ToolTip="Everything about this card's grading assessment, with defects highlighted on the photos" />
                 <Button Content="Back (Esc)" Command="{Binding BackCommand}" Margin="0,0,8,0" />
                 <Button Content="_Save (Ctrl+S)" Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>

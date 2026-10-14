@@ -69,6 +69,17 @@ public class AssessmentServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_preview_gives_the_same_result_but_saves_nothing()
+    {
+        var inspectionId = await InspectAsync();
+
+        var preview = await Assessments.PreviewAsync(inspectionId, "psa-centering");
+
+        Assert.Equal(9, preview.MaxGrade);
+        Assert.Single(await Inspections.GetHistoryAsync(_cardId)); // only the inspection itself
+    }
+
+    [Fact]
     public async Task Configured_defect_rules_are_applied()
     {
         var inspectionId = await InspectAsync(new DefectInput { Type = DefectType.Crease, Severity = 5, Region = CardRegion.Surface, Side = CardSide.Back });

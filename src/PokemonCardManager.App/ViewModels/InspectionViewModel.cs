@@ -80,6 +80,8 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
         ResetGuidesCommand = new RelayCommand<object>(_ => Guides = CenteringGuides.Default);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => _cardId is not null);
         BackCommand = new AsyncRelayCommand(BackAsync);
+        GradingReportCommand = new AsyncRelayCommand(
+            () => _navigation.NavigateToAsync<GradingReportViewModel>(new GradingReportTarget(_cardId!.Value)), () => _cardId is not null);
         OpenQueueItemCommand = new AsyncRelayCommand<InspectionQueueItem>(item =>
             item is null ? Task.CompletedTask : _navigation.NavigateToAsync<InspectionViewModel>(new InspectionTarget(item.Id)));
         Defects.CollectionChanged += (_, _) =>
@@ -262,6 +264,7 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     public ICommand ResetGuidesCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
     public AsyncRelayCommand BackCommand { get; }
+    public AsyncRelayCommand GradingReportCommand { get; }
     public ICommand OpenQueueItemCommand { get; }
 
     /// <summary>Parameter: an <see cref="InspectionTarget"/>, or null to show the cards waiting for inspection.</summary>
