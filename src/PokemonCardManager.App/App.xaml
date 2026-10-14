@@ -1,0 +1,72 @@
+<Application x:Class="PokemonCardManager.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:PokemonCardManager.App.ViewModels"
+             xmlns:views="clr-namespace:PokemonCardManager.App.Views"
+             xmlns:conv="clr-namespace:PokemonCardManager.App.Converters"
+             ShutdownMode="OnMainWindowClose">
+    <!-- No StartupUri: App.xaml.cs creates the window through dependency injection. -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- [0] colours: swapped at runtime by ThemeService (Dark.xaml or Light.xaml) -->
+                <ResourceDictionary Source="Resources/Themes/Dark.xaml" />
+                <!-- [1] control styles: shapes and spacing, colours via DynamicResource -->
+                <ResourceDictionary Source="Resources/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:EnumToTextConverter x:Key="EnumToText" />
+            <conv:NotEmptyToVisibilityConverter x:Key="NotEmptyToVisibility" />
+            <conv:EmptyToVisibilityConverter x:Key="EmptyToVisibility" />
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+
+            <!--
+                How navigation finds a view: when the shell shows a ViewModel,
+                WPF looks up the DataTemplate for its type and creates that view.
+            -->
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+                <views:DashboardView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CollectionViewModel}">
+                <views:CollectionView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CardEditorViewModel}">
+                <views:CardEditorView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:IdentifyViewModel}">
+                <views:IdentifyView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:InspectionViewModel}">
+                <views:InspectionView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:GradingReportViewModel}">
+                <views:GradingReportView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:MarketViewModel}">
+                <views:MarketView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SubmissionsViewModel}">
+                <views:SubmissionsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SalesViewModel}">
+                <views:SalesView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CollectionImportViewModel}">
+                <views:CollectionImportView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+                <views:ReportsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BackupViewModel}">
+                <views:BackupView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:StorageLocationsViewModel}">
+                <views:StorageLocationsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                <views:SettingsView />
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

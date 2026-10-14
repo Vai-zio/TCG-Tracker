@@ -1,0 +1,62 @@
+<UserControl x:Class="PokemonCardManager.App.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="Backup &amp; export" Style="{StaticResource PageTitleStyle}" />
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,0,0,10"
+                   Visibility="{Binding Status, Converter={StaticResource NotEmptyToVisibility}}" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="340" />
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Margin="0,0,16,0">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <Button DockPanel.Dock="Right" Content="Open folder" Command="{Binding OpenFolderCommand}" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                        <Run Text="Backups in " /><Run Text="{Binding BackupDirectory, Mode=OneWay}" />
+                    </TextBlock>
+                </DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="_Check selected" Command="{Binding VerifyCommand}" Margin="0,0,8,0" />
+                    <Button Content="_Restore selected…" Command="{Binding RestoreSelectedCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                    <Button Content="Restore from _file…" Command="{Binding RestoreFileCommand}" />
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Backups}" SelectedItem="{Binding Selected}" IsReadOnly="True" AutomationProperties.Name="Backups">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Made (UTC)" Binding="{Binding CreatedAt, StringFormat=yyyy-MM-dd HH:mm}" Width="130" />
+                        <DataGridTextColumn Header="Kind" Binding="{Binding Label}" Width="110" />
+                        <DataGridCheckBoxColumn Header="Photos" Binding="{Binding IncludesImages, Mode=OneWay}" Width="60" />
+                        <DataGridTextColumn Header="Photo count" Binding="{Binding ImageCount}" Width="90" />
+                        <DataGridTextColumn Header="Size" Binding="{Binding SizeText}" Width="80" />
+                        <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <StackPanel Grid.Column="1">
+                <Border Style="{StaticResource GlassPanelStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Make a backup" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="One .zip file with a consistent copy of the database and, if ticked, every photo. Each file gets a checksum so damage is caught before a restore. A database-only backup is also made automatically at startup once a week (Backup:AutomaticIntervalDays). Copy backups to another drive or cloud folder to protect against disk failure." />
+                        <CheckBox Content="Include _photos" IsChecked="{Binding IncludeImages}" Margin="0,0,0,10" />
+                        <Button Content="_Back up now" Command="{Binding BackupCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource GlassPanelStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Export to CSV" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Style="{StaticResource SubtleTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="For spreadsheets. The price file uses the same columns as Market → Import CSV, so it can be imported again. To move the whole app, use a backup instead." />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="_Collection…" Command="{Binding ExportCollectionCommand}" Margin="0,0,8,0" />
+                            <Button Content="_Prices…" Command="{Binding ExportPricesCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>
