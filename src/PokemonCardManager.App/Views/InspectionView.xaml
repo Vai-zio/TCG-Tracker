@@ -46,6 +46,8 @@
             <DockPanel DockPanel.Dock="Top">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button Content="Back to card" Command="{Binding BackCommand}" Margin="0,0,8,0" />
+                    <Button Content="Grading report" Command="{Binding GradingReportCommand}" Margin="0,0,8,0"
+                            ToolTip="See the saved inspections as one report, with defects highlighted" />
                     <Button Content="_Save inspection (Ctrl+S)" Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" />
                 </StackPanel>
                 <StackPanel>

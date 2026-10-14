@@ -29,23 +29,16 @@ public sealed class AssessmentService(
         })
         .ToList();
 
+    public async Task<AssessmentOutcome> PreviewAsync(Guid inspectionId, string? profileId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
+        return (await EvaluateAsync(db, inspectionId, profileId, cancellationToken)).Outcome;
+    }
+
     public async Task<SavedAssessment> AssessAsync(Guid inspectionId, string? profileId, CancellationToken cancellationToken = default)
     {
-        var inspection = await inspections.GetInspectionAsync(inspectionId, cancellationToken)
-                         ?? throw new DomainRuleViolationException("The inspection no longer exists.");
-        if (inspection.Summary.Method != AssessmentMethod.ManualInspection)
-            throw new DomainRuleViolationException("Only a manual inspection can be assessed.");
-        var profile = profileId is null ? null
-            : Profiles.FirstOrDefault(p => p.Id == profileId) ?? throw new DomainRuleViolationException($"Unknown profile '{profileId}'.");
-
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var cardId = await db.ConditionAssessments.Where(a => a.Id == inspectionId).Select(a => a.PhysicalCardId).SingleAsync(cancellationToken);
-        var photos = (await db.CardImages.AsNoTracking().Where(i => i.PhysicalCardId == cardId && i.OriginalImageId == null)
-                .ToListAsync(cancellationToken))
-            .Select(i => new PhotoEvidence(i.Id, i.Kind, i.Side, Rate(i)))
-            .ToList();
-
-        var outcome = AssessmentEngine.Assess(new AssessmentEvidence(inspection, photos), profile);
+        var (inspection, cardId, profile, outcome) = await EvaluateAsync(db, inspectionId, profileId, cancellationToken);
 
         var company = profile is null || outcome.MaxGrade is null ? null : await FindOrAddCompanyAsync(db, profile, cancellationToken);
         var assessment = new ConditionAssessment
@@ -73,6 +66,26 @@ public sealed class AssessmentService(
         logger.LogInformation("Rule-based assessment {AssessmentId} from inspection {InspectionId}: {Status}, max grade {MaxGrade}",
             assessment.Id, inspectionId, outcome.Status, outcome.MaxGrade);
         return new SavedAssessment(assessment.Id, outcome);
+    }
+
+    private async Task<(InspectionDetails Inspection, Guid CardId, GradingProfile? Profile, AssessmentOutcome Outcome)> EvaluateAsync(
+        PokemonCardDbContext db, Guid inspectionId, string? profileId, CancellationToken cancellationToken)
+    {
+        var inspection = await inspections.GetInspectionAsync(inspectionId, cancellationToken)
+                         ?? throw new DomainRuleViolationException("The inspection no longer exists.");
+        if (inspection.Summary.Method != AssessmentMethod.ManualInspection)
+            throw new DomainRuleViolationException("Only a manual inspection can be assessed.");
+        var profile = profileId is null ? null
+            : Profiles.FirstOrDefault(p => p.Id == profileId) ?? throw new DomainRuleViolationException($"Unknown profile '{profileId}'.");
+
+        var cardId = await db.ConditionAssessments.Where(a => a.Id == inspectionId).Select(a => a.PhysicalCardId).SingleAsync(cancellationToken);
+        var photos = (await db.CardImages.AsNoTracking().Where(i => i.PhysicalCardId == cardId && i.OriginalImageId == null)
+                .ToListAsync(cancellationToken))
+            .Select(i => new PhotoEvidence(i.Id, i.Kind, i.Side, Rate(i)))
+            .ToList();
+
+        var outcome = AssessmentEngine.Assess(new AssessmentEvidence(inspection, photos), profile);
+        return (inspection, cardId, profile, outcome);
     }
 
     private ImageQualityRating Rate(Core.Collection.CardImage image) =>

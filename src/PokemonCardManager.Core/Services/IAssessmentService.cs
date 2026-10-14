@@ -12,6 +12,9 @@ public interface IAssessmentService
     IReadOnlyList<GradingProfile> Profiles { get; }
 
     Task<SavedAssessment> AssessAsync(Guid inspectionId, string? profileId, CancellationToken cancellationToken = default);
+
+    /// <summary>Same result as <see cref="AssessAsync"/>, but nothing is saved. Used to show the report live.</summary>
+    Task<AssessmentOutcome> PreviewAsync(Guid inspectionId, string? profileId, CancellationToken cancellationToken = default);
 }
 
 public sealed record SavedAssessment(Guid AssessmentId, AssessmentOutcome Outcome);

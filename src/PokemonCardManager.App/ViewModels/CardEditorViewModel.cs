@@ -84,6 +84,8 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
         OpenPhotoCommand = new AsyncRelayCommand<CardImageViewModel>(OpenPhotoAsync);
         InspectCommand = new AsyncRelayCommand(() => _navigation.NavigateToAsync<InspectionViewModel>(new InspectionTarget(_cardId!.Value)),
             () => IsExisting);
+        GradingReportCommand = new AsyncRelayCommand(
+            () => _navigation.NavigateToAsync<GradingReportViewModel>(new GradingReportTarget(_cardId!.Value)), () => IsExisting);
     }
 
     // Choices for the drop-downs
@@ -150,6 +152,7 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
     public AsyncRelayCommand AddPhotosCommand { get; }
     public ICommand OpenPhotoCommand { get; }
     public AsyncRelayCommand InspectCommand { get; }
+    public AsyncRelayCommand GradingReportCommand { get; }
 
     /// <summary>Parameter: the card's id to edit, or null for a new card.</summary>
     public async Task OnNavigatedToAsync(object? parameter)
