@@ -258,6 +258,22 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
   against how many matching copies you own, plus repeated lines within the file.
 - **BGS and CGC** centering profiles next to PSA, selectable on Inspection → Assess.
 
+**Milestone 10 (fee tiers, own estimates, automatic centering): in progress.**
+- **Saved grading fee tiers** (`IGradingFeeService`, using the `GradingServiceTier` table from the schema work):
+  save a tier (e.g. PSA Value, 25 USD, cards up to 499 USD) in the grading calculator and pick it next time to fill
+  the fee. A new price is a new row with a later date, so old prices stay as history; the one in force today is used.
+  The fee is converted with your recorded exchange rates only, and you're warned when the card is worth more than
+  the tier accepts.
+- **Estimated value on a card** (card editor and collection CSV `EstimatedValue`/`EstimatedCurrency`). The collection
+  value (dashboard tile and Reports) uses it only when Market has no sale or estimate for that card, and says how
+  many values came from it.
+- **Find centering lines automatically** (`ICenteringDetector`, Inspection → Centering): OpenCV finds the card's
+  outline, then samples 21 short lines across each side. Along each line the outer edge is the sharpest colour change
+  and the inner edge is where the colour stops matching the printed border. The median of the lines is the guide;
+  how much the lines disagree flags an unclear side. Tilted photos (over 4°) and full-art cards are refused with a
+  reason. The lines are a suggestion: you check them and press "Use this measurement", and the saved record says
+  the guides were placed automatically.
+
 Known limitations:
 - Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
   (the table exists) and filtering by value.
@@ -282,8 +298,9 @@ Known limitations:
   Deleting a sale restores each card's status from its history (graded, inspected or cataloged), since the exact
   earlier status isn't stored.
 - Collection CSV import: a storage location must exist before a file can refer to it.
-- Valuation: grading fees are typed into the calculator each time; saved fee tiers per company come with the
-  database schema work (the `GradingServiceTier` table). TCGdex prices couldn't be fetched live from the build
+- Automatic centering is tested on generated card images, not yet on real photos. It needs a straight-on photo on a
+  plain background, and it can't measure full-art cards (no printed border).
+- Valuation: TCGdex prices couldn't be fetched live from the build
   environment (tested against the documented example). There's no free, licensed source of completed graded sales,
   so graded prices come from your own entries or CSV files.
 - Identification: the TCGdex client was written from TCGdex's documentation and tested against documented response

@@ -14,7 +14,7 @@ public sealed class DashboardViewModel(IDashboardService dashboard, IReportServi
     private string _valueText = "—";
     private string _valueNote = "";
 
-    /// <summary>Sum of recorded sale medians (or estimates) for cards still owned. "—" when nothing has a price.</summary>
+    /// <summary>Sum of recorded sale medians (or estimates, or the card's own estimated value) for cards still owned. "—" when nothing has a price.</summary>
     public string ValueText { get => _valueText; private set => SetProperty(ref _valueText, value); }
     public string ValueNote { get => _valueNote; private set => SetProperty(ref _valueNote, value); }
 
@@ -42,7 +42,7 @@ public sealed class DashboardViewModel(IDashboardService dashboard, IReportServi
         var currency = configuration["Collection:DefaultCurrency"] is { Length: 3 } c ? c : "DKK";
         var value = await reports.GetCollectionValueAsync(currency);
         ValueText = value.ValuedCards == 0 ? "—" : $"{value.Total.Amount:N0} {value.Currency}";
-        ValueNote = value.ValuedCards == 0 ? "add prices in Market to see this"
+        ValueNote = value.ValuedCards == 0 ? "add prices in Market, or an estimated value on a card"
             : $"{value.ValuedCards} card(s) priced" + (value.UnvaluedCards > 0 ? $", {value.UnvaluedCards} without a price" : "");
         OnPropertyChanged(nameof(Rarities));
         OnPropertyChanged(nameof(Activity));

@@ -38,6 +38,9 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     private double _rotation;
     private OverlayMode _mode = OverlayMode.Look;
     private CenteringGuides _guides = CenteringGuides.Default;
+    private readonly ICenteringDetector _centeringDetector;
+    private bool _guidesAutoPlaced;
+    private string? _autoCenteringNote;
     private CenteringInput? _frontCentering;
     private CenteringInput? _backCentering;
     private bool _inspectCentering, _inspectCorners, _inspectEdges, _inspectSurface;
@@ -49,8 +52,10 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     private bool _isCheckingQuality;
 
     public InspectionViewModel(IInspectionService inspections, IImageService images, ICollectionService collection,
-        NavigationService navigation, IAssessmentService assessments)
+        NavigationService navigation, IAssessmentService assessments, ICenteringDetector centeringDetector)
     {
+        _centeringDetector = centeringDetector;
+        AutoCenteringCommand = new AsyncRelayCommand(AutoCenteringAsync, () => SelectedPhoto is not null);
         _assessments = assessments;
         Profiles = [.. assessments.Profiles.Select(p => new Option<string?>($"{p.CompanyCode} limits ({p.CompanyName})", p.Id)),
             new Option<string?>("Description only (no grade limits)", null)];
@@ -107,6 +112,7 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
             Guides = (value?.Info.Side == CardSide.Back ? _backCentering : _frontCentering) is { } saved && saved.ImageId == value?.Info.Id
                 ? saved.Guides : CenteringGuides.Default;
             RefreshBoxes();
+            AutoCenteringNote = null;
             OnPropertyChanged(nameof(CenteringText));
             if (value is not null) LoadPhoto(value);
         }
@@ -156,7 +162,30 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     public CenteringGuides Guides
     {
         get => _guides;
-        set { if (SetProperty(ref _guides, value)) OnPropertyChanged(nameof(CenteringText)); }
+        set
+        {
+            if (!SetProperty(ref _guides, value)) return;
+            _guidesAutoPlaced = false; // any change by hand makes it a manual measurement
+            OnPropertyChanged(nameof(CenteringText));
+        }
+    }
+
+    /// <summary>What automatic placement found, its warnings, or why it couldn't place the guides.</summary>
+    public string? AutoCenteringNote { get => _autoCenteringNote; private set => SetProperty(ref _autoCenteringNote, value); }
+    public AsyncRelayCommand AutoCenteringCommand { get; }
+
+    private async Task AutoCenteringAsync()
+    {
+        if (SelectedPhoto is not { } photo) return;
+        AutoCenteringNote = "Looking for the card's edges…";
+        var result = await _centeringDetector.DetectAsync(photo.FullPath);
+        if (SelectedPhoto != photo) return; // the user moved on while it ran
+        if (result.Guides is { } guides)
+        {
+            Guides = guides;
+            _guidesAutoPlaced = true;
+        }
+        AutoCenteringNote = string.Join(" ", result.Warnings.Prepend(result.Message));
     }
     /// <summary>Live result for the guides on the current photo.</summary>
     public string CenteringText
@@ -327,7 +356,7 @@ public sealed class InspectionViewModel : ViewModelBase, INavigationAware, IHasU
     private void UseCentering()
     {
         if (SelectedPhoto is not { } photo) return;
-        var measurement = new CenteringInput(photo.Info.Side, photo.Info.Id, Guides);
+        var measurement = new CenteringInput(photo.Info.Side, photo.Info.Id, Guides, _guidesAutoPlaced);
         if (photo.Info.Side == CardSide.Back) _backCentering = measurement; else _frontCentering = measurement;
         InspectCentering = true;
         OnPropertyChanged(nameof(FrontCenteringText));

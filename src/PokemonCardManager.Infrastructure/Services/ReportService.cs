@@ -84,7 +84,7 @@ public sealed class ReportService(
             .Where(c => c.Status != WorkflowStatus.Sold && c.Status != WorkflowStatus.Traded)
             .Select(c => new
             {
-                c.Id, c.CardReferenceId,
+                c.Id, c.CardReferenceId, c.EstimatedRawValue, c.EstimatedRawValueCurrency, c.UpdatedAt,
                 Card = c.CardReference.Name + " · " + c.CardReference.CardSet.Name + " " + c.CardReference.CollectorNumber,
             })
             .ToListAsync(cancellationToken);
@@ -119,10 +119,25 @@ public sealed class ReportService(
         {
             var graded = gradedByCard.GetValueOrDefault(card.Id);
             var key = (card.CardReferenceId, graded?.Code, graded is null ? (decimal?)null : graded.Grade);
-            if (Value(key) is not { Median: { } median } summary) continue;
+            if (Value(key) is not { Median: { } median } summary)
+            {
+                // No market price: fall back to the owner's own estimate on the card (raw copies only).
+                if (graded is null && OwnEstimate(card.EstimatedRawValue, card.EstimatedRawValueCurrency) is { } own)
+                    rows.Add(new CardValueRow(card.Id, card.Card, "Raw", own, ValueBasis.OwnEstimate, 1,
+                        DateOnly.FromDateTime(card.UpdatedAt), false));
+                continue;
+            }
             rows.Add(new CardValueRow(card.Id, card.Card, graded is null ? "Raw" : $"{graded.Code} {graded.Grade:0.#}",
                 median, summary.Type == PriceObservationType.CompletedSale ? ValueBasis.CompletedSales : ValueBasis.Estimates,
                 summary.Count, summary.Newest!.Value, summary.IsStale));
+        }
+
+        Money? OwnEstimate(decimal? amount, string? from)
+        {
+            if (amount is not { } a || from is null) return null;
+            var money = new Money(a, from);
+            if (string.Equals(from, currency, StringComparison.OrdinalIgnoreCase)) return money;
+            return rates.Convert(money, currency, today)?.Value.Round();
         }
 
         Money Sum(IEnumerable<CardValueRow> r) => r.Aggregate(Money.Zero(currency), (sum, row) => sum + row.Value);
@@ -131,9 +146,10 @@ public sealed class ReportService(
         if (unvalued > 0) warnings.Add($"{unvalued} card(s) have no usable sale or estimate in {currency} and are not counted.");
         if (rows.Count(r => r.IsStale) is > 0 and var stale) warnings.Add($"{stale} value(s) rest on prices older than {options.Value.StaleAfterDays} days.");
         if (rows.Count(r => r.Basis == ValueBasis.Estimates) is > 0 and var est) warnings.Add($"{est} value(s) come from estimates because there are no recorded sales.");
+        if (rows.Count(r => r.Basis == ValueBasis.OwnEstimate) is > 0 and var ownCount) warnings.Add($"{ownCount} value(s) come from your own estimate on the card because Market has no price for them.");
 
         return new CollectionValueReport(currency, Sum(rows), Sum(rows.Where(r => r.Basis == ValueBasis.CompletedSales)),
-            Sum(rows.Where(r => r.Basis == ValueBasis.Estimates)), rows.Count, unvalued,
+            Sum(rows.Where(r => r.Basis != ValueBasis.CompletedSales)), rows.Count, unvalued,
             rows.OrderByDescending(r => r.Value.Amount).ToList(), warnings);
     }
 }

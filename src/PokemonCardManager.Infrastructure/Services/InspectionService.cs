@@ -85,7 +85,8 @@ public sealed class InspectionService(
                 CardImageId = c.ImageId,
                 LeftBorder = borders.Left, RightBorder = borders.Right, TopBorder = borders.Top, BottomBorder = borders.Bottom,
                 Unit = "px",
-                Method = $"Manual guides on the photo (not perspective-corrected); ±{result.UncertaintyPoints:0.#} points " +
+                Method = (c.AutoPlaced ? "Guides placed automatically (OpenCV) and checked by the inspector" : "Manual guides") +
+                         $" on the photo (not perspective-corrected); ±{result.UncertaintyPoints:0.#} points " +
                          $"if each guide is off by {CenteringCalculator.AssumedPlacementErrorPx:0} px.",
                 Confidence = null, // not quantified: we give a ± margin instead of an invented percentage
             });

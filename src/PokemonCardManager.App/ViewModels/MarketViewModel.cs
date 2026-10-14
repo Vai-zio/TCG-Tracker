@@ -38,10 +38,11 @@ public sealed class MarketViewModel : ViewModelBase, INavigationAware
     private Option<string> _calcCompany = new("PSA", "PSA");
     private MarketOverview? _overview;
 
-    public MarketViewModel(IMarketService market, IDialogService dialogs, IConfiguration configuration)
+    public MarketViewModel(IMarketService market, IGradingFeeService fees, IDialogService dialogs, IConfiguration configuration)
     {
         _market = market;
         _dialogs = dialogs;
+        Calculator = new GradingProfitViewModel(fees);
         _currency = configuration["Collection:DefaultCurrency"] is { Length: 3 } c ? c.ToUpperInvariant() : "DKK";
         _newCurrency = _rateTo = _currency;
         _newTier = TierOptions[0];
@@ -131,9 +132,16 @@ public sealed class MarketViewModel : ViewModelBase, INavigationAware
     public AsyncRelayCommand AddPriceCommand { get; }
 
     // ---- Calculator ----
-    public GradingProfitViewModel Calculator { get; } = new();
+    public GradingProfitViewModel Calculator { get; }
     public ObservableCollection<Option<string>> CompanyOptions { get; } = [];
-    public Option<string> CalcCompany { get => _calcCompany; set => SetProperty(ref _calcCompany, value); }
+    public Option<string> CalcCompany
+    {
+        get => _calcCompany;
+        set { if (SetProperty(ref _calcCompany, value) && value is not null) LoadTiers(); }
+    }
+
+    // async void: started from a property setter; errors reach the app's dispatcher handler and are logged.
+    private async void LoadTiers() => await Calculator.LoadTiersAsync(CalcCompany.Value);
     public AsyncRelayCommand FillCalculatorCommand { get; }
 
     // ---- Exchange rates ----
@@ -161,7 +169,9 @@ public sealed class MarketViewModel : ViewModelBase, INavigationAware
             TierOptions.Add(new Option<string?>(code, code));
             CompanyOptions.Add(new Option<string>(code, code));
         }
-        CalcCompany = CompanyOptions.FirstOrDefault(o => o.Value == "PSA") ?? CompanyOptions.FirstOrDefault() ?? CalcCompany;
+        _calcCompany = CompanyOptions.FirstOrDefault(o => o.Value == "PSA") ?? CompanyOptions.FirstOrDefault() ?? _calcCompany;
+        OnPropertyChanged(nameof(CalcCompany));
+        await Calculator.LoadTiersAsync(_calcCompany.Value);
         await Task.WhenAll(SearchAsync(), LoadRatesAsync());
     }
 

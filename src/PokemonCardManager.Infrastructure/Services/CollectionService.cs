@@ -146,6 +146,8 @@ public sealed class CollectionService(
                 AcquiredOn = c.AcquiredOn,
                 PurchasePrice = c.PurchasePrice,
                 PurchaseCurrency = c.PurchaseCurrency,
+                EstimatedValue = c.EstimatedRawValue,
+                EstimatedValueCurrency = c.EstimatedRawValueCurrency,
                 AcquisitionSource = c.AcquisitionSource,
                 StorageLocationId = c.StorageLocationId,
                 Status = c.Status,
@@ -272,6 +274,7 @@ public sealed class CollectionService(
             AcquisitionSource = Blank(input.AcquisitionSource),
             Notes = Blank(input.Notes),
             PurchaseCurrency = string.IsNullOrWhiteSpace(input.PurchaseCurrency) ? null : CurrencyCode.Normalize(input.PurchaseCurrency),
+            EstimatedValueCurrency = string.IsNullOrWhiteSpace(input.EstimatedValueCurrency) ? null : CurrencyCode.Normalize(input.EstimatedValueCurrency),
         };
 
     /// <summary>
@@ -324,6 +327,8 @@ public sealed class CollectionService(
         card.AcquiredOn = input.AcquiredOn;
         card.PurchasePrice = input.PurchasePrice;
         card.PurchaseCurrency = input.PurchaseCurrency;
+        card.EstimatedRawValue = input.EstimatedValue;
+        card.EstimatedRawValueCurrency = input.EstimatedValue is null ? null : input.EstimatedValueCurrency;
         card.AcquisitionSource = input.AcquisitionSource;
         card.StorageLocationId = input.StorageLocationId;
         card.Status = input.Status;

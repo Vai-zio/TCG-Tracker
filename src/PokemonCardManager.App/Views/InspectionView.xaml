@@ -157,6 +157,8 @@
                             Visibility="{Binding IsCenteringMode, Converter={StaticResource BoolToVisibility}}">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Find lines automatically" Command="{Binding AutoCenteringCommand}" Margin="8,0,0,0"
+                                        ToolTip="Finds the card's edge and the printed border's inner edge. Check the lines before using them." />
                                 <Button Content="Reset lines" Command="{Binding ResetGuidesCommand}" Margin="8,0,8,0" />
                                 <Button Content="Use this measurement" Command="{Binding UseCenteringCommand}" Style="{StaticResource AccentButtonStyle}" />
                             </StackPanel>
@@ -164,6 +166,8 @@
                                 <TextBlock Text="{Binding CenteringText}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                 <TextBlock Style="{StaticResource MutedTextStyle}" FontSize="11" TextWrapping="Wrap"
                                            Text="Blue lines: the card's outer edge. Pink lines: the inner edge of the printed border. Use a photo taken straight on; tilt skews the result." />
+                                <TextBlock Text="{Binding AutoCenteringNote}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                           Visibility="{Binding AutoCenteringNote, Converter={StaticResource NotEmptyToVisibility}}" />
                             </StackPanel>
                         </DockPanel>
                     </Border>

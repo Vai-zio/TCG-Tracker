@@ -30,6 +30,7 @@ public class PokemonCardDbContext(DbContextOptions<PokemonCardDbContext> options
     public DbSet<Defect> Defects => Set<Defect>();
 
     public DbSet<GradingCompany> GradingCompanies => Set<GradingCompany>();
+    public DbSet<GradingServiceTier> GradingServiceTiers => Set<GradingServiceTier>();
     public DbSet<PriceObservation> PriceObservations => Set<PriceObservation>();
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
 

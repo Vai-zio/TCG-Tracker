@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddSingleton<IDatabaseInitializer, DatabaseInitializer>();
         services.AddSingleton<IValidator<InspectionInput>, InspectionInputValidator>();
         services.AddSingleton<IImageAnalyzer, OpenCvImageAnalyzer>();
+        services.AddSingleton<ICenteringDetector, OpenCvCenteringDetector>();
         services.AddSingleton<IInspectionService, InspectionService>();
         services.AddSingleton<IAssessmentService, AssessmentService>();
 
@@ -89,6 +90,8 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<PriceObservationInput>, PriceObservationInputValidator>();
         services.AddSingleton<IValidator<ExchangeRateInput>, ExchangeRateInputValidator>();
         services.AddSingleton<IMarketService, MarketService>();
+        services.AddSingleton<IValidator<FeeTierInput>, FeeTierInputValidator>();
+        services.AddSingleton<IGradingFeeService, GradingFeeService>();
         services.AddSingleton<IValidator<SubmissionInput>, SubmissionInputValidator>();
         services.AddSingleton<ISubmissionService, SubmissionService>();
         services.AddSingleton<IValidator<TransactionInput>, TransactionInputValidator>();

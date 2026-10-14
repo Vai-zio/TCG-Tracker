@@ -36,3 +36,19 @@ public class ExchangeRateInputValidator : AbstractValidator<ExchangeRateInput>
         RuleFor(r => r.Source).NotEmpty().MaximumLength(100);
     }
 }
+
+public class FeeTierInputValidator : AbstractValidator<FeeTierInput>
+{
+    public FeeTierInputValidator()
+    {
+        RuleFor(t => t.CompanyCode).NotEmpty().WithMessage("Pick a grading company.");
+        RuleFor(t => t.Name).NotEmpty().WithMessage("Give the tier a name, e.g. Value.").MaximumLength(100);
+        RuleFor(t => t.FeePerCard).GreaterThanOrEqualTo(0).WithMessage("Fee can't be negative.")
+            .PrecisionScale(14, 2, ignoreTrailingZeros: true);
+        RuleFor(t => t.Currency).Must(CurrencyCode.IsValid).WithMessage("Currency must be a three-letter code like USD.");
+        RuleFor(t => t.MaxDeclaredValue).GreaterThan(0).When(t => t.MaxDeclaredValue is not null)
+            .WithMessage("Max declared value must be above 0, or left empty for no limit.");
+        RuleFor(t => t.TurnaroundDays).GreaterThan(0).When(t => t.TurnaroundDays is not null)
+            .WithMessage("Turnaround must be a positive number of days.");
+    }
+}

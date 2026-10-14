@@ -122,6 +122,15 @@
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Style="{StaticResource FieldStyle}">
+                                <Label Content="Estimated _value" Target="{Binding ElementName=EstimateBox}" Style="{StaticResource FieldLabelStyle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox x:Name="EstimateBox" Width="100" Text="{Binding EstimatedValueText, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Your own guess of what this copy is worth raw. Used on the dashboard when Market has no price." />
+                                    <TextBox Width="56" Margin="4,0,0,0" Text="{Binding EstimatedCurrency, UpdateSourceTrigger=PropertyChanged}"
+                                             CharacterCasing="Upper" MaxLength="3" AutomationProperties.Name="Estimated value currency" ToolTip="Currency, e.g. DKK" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource FieldStyle}">
                                 <Label Content="Acquired from" Target="{Binding ElementName=SourceBox}" Style="{StaticResource FieldLabelStyle}" />
                                 <TextBox x:Name="SourceBox" Width="200" Text="{Binding AcquisitionSource, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>

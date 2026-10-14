@@ -26,38 +26,11 @@ public sealed class OpenCvCardDetector : ICardDetector
         using var photo = Cv2.ImDecode(bytes, ImreadModes.Color);
         if (photo.Empty()) return new CardDetection(false, null, "The photo couldn't be decoded. The file may be damaged.");
 
-        var scale = Math.Min(1.0, (double)DetectionLongSide / Math.Max(photo.Width, photo.Height));
-        using var small = new Mat();
-        Cv2.Resize(photo, small, new Size(), scale, scale, InterpolationFlags.Area);
-        using var grey = new Mat();
-        Cv2.CvtColor(small, grey, ColorConversionCodes.BGR2GRAY);
-        Cv2.GaussianBlur(grey, grey, new Size(5, 5), 0);
-        using var edges = new Mat();
-        Cv2.Canny(grey, edges, 50, 150);
-        // Thicken edges so small gaps in the card's outline (glare, a sleeve corner) close up.
-        using var kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(5, 5));
-        Cv2.Dilate(edges, edges, kernel);
         cancellationToken.ThrowIfCancellationRequested();
-
-        Cv2.FindContours(edges, out var contours, out _, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
-        var minArea = MinAreaFraction * small.Width * small.Height;
-        Point2f[]? corners = null;
-        foreach (var contour in contours.OrderByDescending(c => Cv2.ContourArea(c)))
-        {
-            if (Cv2.ContourArea(contour) < minArea) break;
-            var approx = Cv2.ApproxPolyDP(contour, 0.02 * Cv2.ArcLength(contour, true), true);
-            if (approx.Length == 4 && Cv2.IsContourConvex(approx))
-            {
-                corners = approx.Select(p => new Point2f((float)(p.X / scale), (float)(p.Y / scale))).ToArray();
-                break;
-            }
-        }
-
-        if (corners is null)
+        if (FindCorners(photo) is not { } ordered)
             return new CardDetection(false, null,
                 "Couldn't find the card's outline. Lay the card flat on a plain background that contrasts with its border, and retake.");
 
-        var ordered = OrderCorners(corners);
         var width = (Distance(ordered[0], ordered[1]) + Distance(ordered[3], ordered[2])) / 2;
         var height = (Distance(ordered[0], ordered[3]) + Distance(ordered[1], ordered[2])) / 2;
         var (outW, outH) = height >= width ? (OutputShortSide, OutputLongSide) : (OutputLongSide, OutputShortSide);
@@ -72,6 +45,36 @@ public sealed class OpenCvCardDetector : ICardDetector
             ? "Card found and straightened. It lies sideways in the photo, so the crop is landscape."
             : "Card found and straightened.";
         return new CardDetection(true, png, message);
+    }
+
+    /// <summary>
+    /// The card's four corners in <paramref name="photo"/>'s pixels, ordered top-left, top-right, bottom-right,
+    /// bottom-left; null when no card-sized four-cornered outline is found. Steps 1–3 of the class summary.
+    /// </summary>
+    internal static Point2f[]? FindCorners(Mat photo)
+    {
+        var scale = Math.Min(1.0, (double)DetectionLongSide / Math.Max(photo.Width, photo.Height));
+        using var small = new Mat();
+        Cv2.Resize(photo, small, new Size(), scale, scale, InterpolationFlags.Area);
+        using var grey = new Mat();
+        Cv2.CvtColor(small, grey, ColorConversionCodes.BGR2GRAY);
+        Cv2.GaussianBlur(grey, grey, new Size(5, 5), 0);
+        using var edges = new Mat();
+        Cv2.Canny(grey, edges, 50, 150);
+        // Thicken edges so small gaps in the card's outline (glare, a sleeve corner) close up.
+        using var kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(5, 5));
+        Cv2.Dilate(edges, edges, kernel);
+
+        Cv2.FindContours(edges, out var contours, out _, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+        var minArea = MinAreaFraction * small.Width * small.Height;
+        foreach (var contour in contours.OrderByDescending(c => Cv2.ContourArea(c)))
+        {
+            if (Cv2.ContourArea(contour) < minArea) break;
+            var approx = Cv2.ApproxPolyDP(contour, 0.02 * Cv2.ArcLength(contour, true), true);
+            if (approx.Length == 4 && Cv2.IsContourConvex(approx))
+                return OrderCorners(approx.Select(p => new Point2f((float)(p.X / scale), (float)(p.Y / scale))).ToArray());
+        }
+        return null;
     }
 
     /// <summary>Top-left, top-right, bottom-right, bottom-left: smallest x+y is top-left, largest is bottom-right, and so on.</summary>
