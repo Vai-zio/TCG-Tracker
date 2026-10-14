@@ -48,6 +48,28 @@
                     <ComboBox ItemsSource="{Binding Conditions}" SelectedItem="{Binding SelectedCondition}" Width="150" AutomationProperties.Name="Condition" />
                     <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus}" AutomationProperties.Name="Status" />
                     <ComboBox ItemsSource="{Binding Locations}" SelectedItem="{Binding SelectedLocation}" Width="200" AutomationProperties.Name="Storage location" />
+                    <!-- Value range on your own estimate. Applied with Enter or Search, like the search box. -->
+                    <TextBlock Text="Value" VerticalAlignment="Center" Margin="8,0,6,4" Style="{StaticResource MutedTextStyle}" />
+                    <TextBox Text="{Binding MinValueText, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0,0,4,4"
+                             AutomationProperties.Name="Value from" ToolTip="Lowest estimated value (Enter)">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding RefreshCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <TextBlock Text="–" VerticalAlignment="Center" Margin="0,0,4,4" />
+                    <TextBox Text="{Binding MaxValueText, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0,0,4,4"
+                             AutomationProperties.Name="Value to" ToolTip="Highest estimated value (Enter)">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding RefreshCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <TextBox Text="{Binding ValueCurrency, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,0,8,4" MaxLength="3"
+                             AutomationProperties.Name="Value currency"
+                             ToolTip="Only cards estimated in this currency match: amounts in different currencies can't be compared">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding RefreshCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
                     <TextBlock Text="Sort by" VerticalAlignment="Center" Margin="8,0,6,4" Style="{StaticResource MutedTextStyle}" />
                     <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort}" Width="150" AutomationProperties.Name="Sort by" />
                     <CheckBox Content="Descending" IsChecked="{Binding Descending}" Margin="0,0,16,4" VerticalAlignment="Center" />
@@ -63,7 +85,36 @@
                         </StackPanel>
                     </Border>
                 </WrapPanel>
+                <!-- Saved filters: pick one to apply it; type a name and Save to keep the current filters -->
+                <WrapPanel Margin="0,4,0,0">
+                    <TextBlock Text="Saved filters" VerticalAlignment="Center" Margin="0,0,6,0" Style="{StaticResource MutedTextStyle}" />
+                    <ComboBox ItemsSource="{Binding SavedFilters}" SelectedItem="{Binding SelectedSavedFilter}" DisplayMemberPath="Name"
+                              Width="200" Margin="0,0,8,0" AutomationProperties.Name="Saved filters" />
+                    <Button Content="Delete" Command="{Binding DeleteFilterCommand}" Margin="0,0,16,0" />
+                    <TextBox Text="{Binding NewFilterName, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"
+                             AutomationProperties.Name="Name for saved filter" ToolTip="Name for the current filters. An existing name is replaced." />
+                    <Button Content="Save filters" Command="{Binding SaveFilterCommand}" />
+                </WrapPanel>
+                <TextBlock Text="{Binding FilterMessage}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" Margin="0,6,0,0"
+                           Visibility="{Binding FilterMessage, Converter={StaticResource NotEmptyToVisibility}}" />
             </StackPanel>
+        </Border>
+
+        <!-- Bulk edit: shown when two or more cards are selected (Ctrl+click or Shift+click) -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource GlassPanelStyle}" Padding="14,10" Margin="0,0,0,12"
+                Visibility="{Binding HasMultipleSelected, Converter={StaticResource BoolToVisibility}}">
+            <WrapPanel>
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold">
+                    <Run Text="{Binding SelectedCount, Mode=OneWay}" /> <Run Text="cards selected" />
+                </TextBlock>
+                <ComboBox ItemsSource="{Binding BulkLocations}" SelectedItem="{Binding BulkLocation}" DisplayMemberPath="Label"
+                          Width="220" Margin="0,0,8,0" AutomationProperties.Name="Bulk location" />
+                <ComboBox ItemsSource="{Binding BulkStatuses}" SelectedItem="{Binding BulkStatus}" DisplayMemberPath="Label"
+                          Width="190" Margin="0,0,8,0" AutomationProperties.Name="Bulk status" />
+                <ComboBox ItemsSource="{Binding BulkConditions}" SelectedItem="{Binding BulkCondition}" DisplayMemberPath="Label"
+                          Width="200" Margin="0,0,8,0" AutomationProperties.Name="Bulk condition" />
+                <Button Content="Apply to selected" Command="{Binding ApplyBulkCommand}" Style="{StaticResource AccentButtonStyle}" />
+            </WrapPanel>
         </Border>
 
         <!-- Paging -->
@@ -81,7 +132,8 @@
         <!-- Results. Only visible rows are created (virtualization); thumbnails load in the background. -->
         <Grid>
             <!-- Thumbnail grid view (one page at a time, so at most 200 tiles) -->
-            <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}"
+            <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" SelectionMode="Extended"
+                     SelectionChanged="OnSelectionChanged"
                      Visibility="{Binding ShowGrid, Converter={StaticResource BoolToVisibility}}"
                      MouseDoubleClick="OnRowDoubleClick" PreviewKeyDown="OnGridKeyDown"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="Transparent"
@@ -113,6 +165,7 @@
             </ListBox>
 
             <DataGrid x:Name="Grid" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}"
+                      SelectionMode="Extended" SelectionChanged="OnSelectionChanged"
                       RowHeight="56" MouseDoubleClick="OnRowDoubleClick" PreviewKeyDown="OnGridKeyDown"
                       Visibility="{Binding ShowTable, Converter={StaticResource BoolToVisibility}}"
                       AutomationProperties.Name="Cards">
@@ -135,6 +188,7 @@
                     <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
                     <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="1.5*" />
                     <DataGridTextColumn Header="Paid" Binding="{Binding Price}" Width="*" />
+                    <DataGridTextColumn Header="Est. value" Binding="{Binding Value}" Width="*" />
                     <DataGridTextColumn Header="Acquired" Binding="{Binding AcquiredOn, StringFormat=d}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>

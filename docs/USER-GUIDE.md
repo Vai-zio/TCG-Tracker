@@ -16,6 +16,18 @@ scenes, so the numbers it shows make sense.
   printing, date, price and source as a card you have; those start unticked. **Import ticked lines** adds them all
   in one go, or nothing if something fails. A Backup & export collection file imports as it is.
 
+## Find and organise cards
+
+- **Value** filter (Collection): type a range like 100 – 500 and a currency, then press Enter. It uses each card's
+  own **Estimated value**, and only cards estimated in that currency match, because 100 DKK and 100 USD aren't
+  comparable. Sort by **Estimated value** to see your most valuable cards first.
+- **Saved filters**: set up the search, filters and sort, type a name and press **Save filters**. Picking it later
+  puts everything back. Saving with a name you already used replaces that filter.
+- **Bulk edit**: select several cards with Ctrl+click or Shift+click and a bar appears. Choose a new location,
+  status and/or condition and press **Apply to selected**; the parts left at "don't change" stay as they are. All
+  cards change together, or none do. Sold, traded, submitted and graded can't be set here: those come from the
+  Sales and Submissions screens, which also keep the record behind them, so cards with those statuses keep them.
+
 ## 2. Inspect condition
 
 **Inspection** shows a card's photos. Mark defects by dragging a box, drag the guides to measure centering, and

@@ -86,6 +86,7 @@ public static class DependencyInjection
         }
         services.AddSingleton<IIdentificationService, IdentificationService>();
         services.AddSingleton<ICollectionService, CollectionService>();
+        services.AddSingleton<ISavedFilterService, SavedFilterService>();
 
         services.AddSingleton<IValidator<PriceObservationInput>, PriceObservationInputValidator>();
         services.AddSingleton<IValidator<ExchangeRateInput>, ExchangeRateInputValidator>();
