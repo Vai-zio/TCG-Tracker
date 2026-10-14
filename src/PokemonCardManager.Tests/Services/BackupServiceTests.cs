@@ -68,8 +68,70 @@ public class BackupServiceTests : IAsyncLifetime
 
         var verification = await Backups.VerifyAsync(backup.Path);
         Assert.False(verification.IsValid);
-        Assert.Contains(verification.Problems, p => p.Contains("checksum"));
+        Assert.Contains(verification.Problems, p => p.Contains("Damaged: collection.db"));
         await Assert.ThrowsAsync<DomainRuleViolationException>(() => Backups.RestoreAsync(backup.Path));
+        Assert.Equal(1, await CardCountAsync());
+    }
+
+    [Fact]
+    public async Task Backups_are_encrypted_and_carry_the_password_protected_key()
+    {
+        await AddCardAsync("Charizard");
+        var backup = await Backups.CreateAsync(includeImages: false);
+
+        using var zip = ZipFile.OpenRead(backup.Path);
+        var header = new byte[16];
+        using (var db = zip.GetEntry("collection.db")!.Open()) db.ReadExactly(header);
+        Assert.NotEqual("SQLite format 3\0", System.Text.Encoding.ASCII.GetString(header)); // a plain database would start with this
+        using var vaultKey = new StreamReader(zip.GetEntry("vault.key")!.Open());
+        Assert.Equal("test-wrapped-key", vaultKey.ReadToEnd());
+    }
+
+    [Fact]
+    public async Task A_backup_from_another_vault_is_refused()
+    {
+        await AddCardAsync("Charizard");
+        var backup = await Backups.CreateAsync(includeImages: false);
+
+        // Same backup, opened by an app whose vault has a different data key.
+        await using var other = new TestEnvironment();
+        await other.InitializeAsync();
+        var otherBackups = other.Services.GetRequiredService<IBackupService>();
+
+        var verification = await otherBackups.VerifyAsync(backup.Path);
+        Assert.False(verification.IsValid);
+        Assert.Contains(verification.Problems, p => p.Contains("different master password vault"));
+    }
+
+    [Fact]
+    public async Task An_unencrypted_backup_from_before_encryption_still_restores()
+    {
+        await AddCardAsync("Charizard");
+        var current = await Backups.CreateAsync(includeImages: false);
+        await AddCardAsync("Blastoise");
+
+        // Rebuild that backup in the old format 1: plain database, no vault.key.
+        var legacy = Path.Combine(_env.ScratchDirectory, "pcm-backup-legacy.zip");
+        var plainDb = Path.Combine(_env.ScratchDirectory, "plain.db");
+        var encryption = _env.Services.GetRequiredService<PokemonCardManager.Security.IEncryptionService>();
+        JsonNode manifest;
+        using (var zip = ZipFile.OpenRead(current.Path))
+        {
+            using (var reader = new StreamReader(zip.GetEntry("manifest.json")!.Open())) manifest = JsonNode.Parse(reader.ReadToEnd())!;
+            await using var input = zip.GetEntry("collection.db")!.Open();
+            await using var output = File.Create(plainDb);
+            await encryption.DecryptStreamAsync(input, output);
+        }
+        manifest["format"] = 1;
+        using (var zip = ZipFile.Open(legacy, ZipArchiveMode.Create))
+        {
+            zip.CreateEntryFromFile(plainDb, "collection.db");
+            using var writer = new StreamWriter(zip.CreateEntry("manifest.json").Open());
+            writer.Write(manifest.ToJsonString());
+        }
+
+        Assert.True((await Backups.VerifyAsync(legacy)).IsValid);
+        await Backups.RestoreAsync(legacy);
         Assert.Equal(1, await CardCountAsync());
     }
 

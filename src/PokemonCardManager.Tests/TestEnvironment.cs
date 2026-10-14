@@ -7,6 +7,7 @@ using PokemonCardManager.Core.Common;
 using PokemonCardManager.Core.Services;
 using PokemonCardManager.Infrastructure;
 using PokemonCardManager.Infrastructure.Persistence;
+using PokemonCardManager.Security;
 
 namespace PokemonCardManager.Tests;
 
@@ -14,6 +15,24 @@ namespace PokemonCardManager.Tests;
 public sealed class FakeClock : IClock
 {
     public DateTime UtcNow { get; set; } = new(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+}
+
+/// <summary>
+/// An unlocked vault with a random key. The real FileKeyVault runs PBKDF2 (slow on purpose),
+/// which would add a pause to every test; its own tests live in PokemonCardManager.Security.Tests.
+/// </summary>
+public sealed class TestKeyVault : IKeyVault
+{
+    private readonly byte[] _key = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+
+    public bool Exists => true;
+    public bool IsUnlocked => true;
+    public Task CreateAsync(string masterPassword, CancellationToken ct = default) => Task.CompletedTask;
+    public Task<bool> TryUnlockAsync(string masterPassword, CancellationToken ct = default) => Task.FromResult(true);
+    public Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default) => Task.FromResult(true);
+    public string ExportWrappedKey() => "test-wrapped-key";
+    public void Lock() { }
+    public byte[] GetDataKey() => (byte[])_key.Clone();
 }
 
 /// <summary>
@@ -49,7 +68,8 @@ public sealed class TestEnvironment : IAsyncLifetime
 
         var services = new ServiceCollection()
             .AddLogging(b => b.SetMinimumLevel(LogLevel.Warning))
-            .AddSingleton<IClock>(Clock); // registered first, so AddInfrastructure keeps it
+            .AddSingleton<IClock>(Clock) // registered first, so AddInfrastructure keeps it
+            .AddSingleton<IKeyVault, TestKeyVault>();
         ConfigureServices?.Invoke(services);
         _services = services
             .AddInfrastructure(configuration)

@@ -18,6 +18,7 @@ using PokemonCardManager.Infrastructure.Options;
 using PokemonCardManager.Infrastructure.Persistence;
 using PokemonCardManager.Infrastructure.Persistence.Interceptors;
 using PokemonCardManager.Infrastructure.Services;
+using PokemonCardManager.Security;
 
 namespace PokemonCardManager.Infrastructure;
 
@@ -99,6 +100,10 @@ public static class DependencyInjection
         services.AddSingleton<ITransactionService, TransactionService>();
         services.AddSingleton<ICollectionImportService, CollectionImportService>();
         services.AddSingleton<IReportService, ReportService>();
+        // Encryption: the vault holds the data key in memory once unlocked; disposing it on exit wipes the key.
+        services.TryAddSingleton<IKeyVault>(provider => new FileKeyVault(
+            Path.Combine(provider.GetRequiredService<IOptions<StorageOptions>>().Value.ResolveDataDirectory(), "vault.key")));
+        services.AddSingleton<IEncryptionService, AesGcmEncryptionService>();
         services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<IExportService, ExportService>();
         return services;
