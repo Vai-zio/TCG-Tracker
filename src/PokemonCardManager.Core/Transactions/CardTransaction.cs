@@ -5,6 +5,9 @@ namespace PokemonCardManager.Core.Transactions;
 
 public enum TransactionType { Purchase, Sale, Trade }
 
+/// <summary>In = the card came to you, Out = it left you. A trade has both.</summary>
+public enum TransactionDirection { In, Out }
+
 /// <summary>
 /// Money that actually changed hands (or a trade). Kept apart from market estimates,
 /// so realised profit is never confused with "what it might be worth".
@@ -35,6 +38,8 @@ public class TransactionLine : Entity
 
     public Guid PhysicalCardId { get; set; }
     public PhysicalCard PhysicalCard { get; set; } = null!;
+
+    public TransactionDirection Direction { get; set; }
 
     /// <summary>This card's part of the amount, in the transaction's currency.</summary>
     public decimal AllocatedAmount { get; set; }

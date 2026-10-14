@@ -1,4 +1,5 @@
 using PokemonCardManager.Core.Catalog;
+using PokemonCardManager.Core.Collection;
 using PokemonCardManager.Core.Common;
 
 namespace PokemonCardManager.Core.Market;
@@ -21,6 +22,8 @@ public class PriceObservation : Entity
     public Guid? GradingCompanyId { get; set; }
     public GradingCompany? GradingCompany { get; set; }
     public decimal? Grade { get; set; }
+    /// <summary>For raw prices: which condition the price is for. Near Mint and Played sell for very different amounts.</summary>
+    public RawCondition? RawCondition { get; set; }
 
     public decimal Price { get; set; }
     public required string Currency { get; set; }

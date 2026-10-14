@@ -32,7 +32,7 @@ public class DatabaseTests : IAsyncLifetime
     {
         await using var db = _env.CreateDbContext();
         var codes = await db.GradingCompanies.Select(c => c.Code).OrderBy(c => c).ToListAsync();
-        Assert.Equal(["BGS", "CGC", "PSA"], codes);
+        Assert.Equal(["BGS", "CGC", "PSA", "SGC", "TAG"], codes);
     }
 
     [Fact]

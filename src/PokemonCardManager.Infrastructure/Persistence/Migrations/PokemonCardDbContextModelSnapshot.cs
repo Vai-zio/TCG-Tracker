@@ -44,7 +44,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("ConditionAssessmentId", "Category")
                         .IsUnique();
 
-                    b.ToTable("CategoryFindings", null, t =>
+                    b.ToTable("CategoryFindings", t =>
                         {
                             t.HasCheckConstraint("CK_CategoryFindings_Severity", "\"Severity\" BETWEEN 0 AND 5");
                         });
@@ -98,7 +98,18 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ConditionAssessmentId");
 
-                    b.ToTable("CenteringMeasurements", (string)null);
+                    b.ToTable("CenteringMeasurements", t =>
+                        {
+                            t.HasCheckConstraint("CK__BottomBorder", "\"BottomBorder\" IS NULL OR \"BottomBorder\" >= 0");
+
+                            t.HasCheckConstraint("CK__Confidence", "\"Confidence\" IS NULL OR (\"Confidence\" >= 0 AND \"Confidence\" <= 1)");
+
+                            t.HasCheckConstraint("CK__LeftBorder", "\"LeftBorder\" IS NULL OR \"LeftBorder\" >= 0");
+
+                            t.HasCheckConstraint("CK__RightBorder", "\"RightBorder\" IS NULL OR \"RightBorder\" >= 0");
+
+                            t.HasCheckConstraint("CK__TopBorder", "\"TopBorder\" IS NULL OR \"TopBorder\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Assessment.ConditionAssessment", b =>
@@ -168,9 +179,17 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PhysicalCardId", "AssessedAt");
 
-                    b.ToTable("ConditionAssessments", null, t =>
+                    b.ToTable("ConditionAssessments", t =>
                         {
+                            t.HasCheckConstraint("CK_ConditionAssessments_GradeHasCompany", "(\"EstimatedGradeLow\" IS NULL AND \"EstimatedGradeHigh\" IS NULL) OR \"GradingCompanyId\" IS NOT NULL");
+
                             t.HasCheckConstraint("CK_ConditionAssessments_GradeRange", "\"EstimatedGradeLow\" IS NULL OR \"EstimatedGradeHigh\" IS NULL OR \"EstimatedGradeLow\" <= \"EstimatedGradeHigh\"");
+
+                            t.HasCheckConstraint("CK__Confidence", "\"Confidence\" IS NULL OR (\"Confidence\" >= 0 AND \"Confidence\" <= 1)");
+
+                            t.HasCheckConstraint("CK__EstimatedGradeHigh", "\"EstimatedGradeHigh\" IS NULL OR (\"EstimatedGradeHigh\" >= 10000 AND \"EstimatedGradeHigh\" <= 100000)");
+
+                            t.HasCheckConstraint("CK__EstimatedGradeLow", "\"EstimatedGradeLow\" IS NULL OR (\"EstimatedGradeLow\" >= 10000 AND \"EstimatedGradeLow\" <= 100000)");
                         });
                 });
 
@@ -244,9 +263,23 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ConditionAssessmentId");
 
-                    b.ToTable("Defects", null, t =>
+                    b.ToTable("Defects", t =>
                         {
+                            t.HasCheckConstraint("CK_Defects_BoxComplete", "(\"BoxX\" IS NULL) = (\"BoxY\" IS NULL) AND (\"BoxX\" IS NULL) = (\"BoxWidth\" IS NULL) AND (\"BoxX\" IS NULL) = (\"BoxHeight\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Defects_BoxInsideImage", "\"BoxX\" IS NULL OR (\"BoxX\" + \"BoxWidth\" <= 1 AND \"BoxY\" + \"BoxHeight\" <= 1)");
+
                             t.HasCheckConstraint("CK_Defects_Severity", "\"Severity\" BETWEEN 0 AND 5");
+
+                            t.HasCheckConstraint("CK__BoxHeight", "\"BoxHeight\" IS NULL OR (\"BoxHeight\" >= 0 AND \"BoxHeight\" <= 1)");
+
+                            t.HasCheckConstraint("CK__BoxWidth", "\"BoxWidth\" IS NULL OR (\"BoxWidth\" >= 0 AND \"BoxWidth\" <= 1)");
+
+                            t.HasCheckConstraint("CK__BoxX", "\"BoxX\" IS NULL OR (\"BoxX\" >= 0 AND \"BoxX\" <= 1)");
+
+                            t.HasCheckConstraint("CK__BoxY", "\"BoxY\" IS NULL OR (\"BoxY\" >= 0 AND \"BoxY\" <= 1)");
+
+                            t.HasCheckConstraint("CK__Confidence", "\"Confidence\" IS NULL OR (\"Confidence\" >= 0 AND \"Confidence\" <= 1)");
                         });
                 });
 
@@ -334,7 +367,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("CardSetId", "CollectorNumber", "Language", "Finish", "Edition")
                         .IsUnique();
 
-                    b.ToTable("CardReferences", (string)null);
+                    b.ToTable("CardReferences");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Catalog.CardSet", b =>
@@ -373,7 +406,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("CardSets", (string)null);
+                    b.ToTable("CardSets");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Catalog.ExternalCardIdentifier", b =>
@@ -402,7 +435,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Provider", "ExternalId")
                         .IsUnique();
 
-                    b.ToTable("ExternalCardIdentifiers", (string)null);
+                    b.ToTable("ExternalCardIdentifiers");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Collection.CardImage", b =>
@@ -475,14 +508,24 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("OriginalImageId");
 
-                    b.HasIndex("PhysicalCardId");
-
                     b.HasIndex("Sha256");
 
                     b.HasIndex("StorageKey")
                         .IsUnique();
 
-                    b.ToTable("CardImages", (string)null);
+                    b.HasIndex("PhysicalCardId", "Sha256")
+                        .IsUnique();
+
+                    b.ToTable("CardImages", t =>
+                        {
+                            t.HasCheckConstraint("CK_CardImages_Sha256", "length(\"Sha256\") = 64");
+
+                            t.HasCheckConstraint("CK__FileSizeBytes", "\"FileSizeBytes\" IS NULL OR \"FileSizeBytes\" >= 0");
+
+                            t.HasCheckConstraint("CK__Height", "\"Height\" IS NULL OR \"Height\" >= 0");
+
+                            t.HasCheckConstraint("CK__Width", "\"Width\" IS NULL OR \"Width\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Collection.PhysicalCard", b =>
@@ -501,6 +544,10 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CardReferenceId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CertificationNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -509,6 +556,12 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("EstimatedRawValueCurrency")
                         .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("Grade")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("GradingCompanyId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
@@ -535,6 +588,10 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("StorageLocationId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("StoragePosition")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -548,7 +605,28 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StorageLocationId");
 
-                    b.ToTable("PhysicalCards", (string)null);
+                    b.HasIndex("GradingCompanyId", "CertificationNumber")
+                        .IsUnique()
+                        .HasFilter("\"CertificationNumber\" IS NOT NULL");
+
+                    b.ToTable("PhysicalCards", t =>
+                        {
+                            t.HasCheckConstraint("CK_PhysicalCards_GradeHasCompany", "\"Grade\" IS NULL OR \"GradingCompanyId\" IS NOT NULL");
+
+                            t.HasCheckConstraint("CK__EstimatedRawValue", "\"EstimatedRawValue\" IS NULL OR \"EstimatedRawValue\" >= 0");
+
+                            t.HasCheckConstraint("CK__EstimatedRawValueCurrency", "\"EstimatedRawValueCurrency\" IS NULL OR length(\"EstimatedRawValueCurrency\") = 3");
+
+                            t.HasCheckConstraint("CK__EstimatedRawValue_HasCurrency", "\"EstimatedRawValue\" IS NULL OR \"EstimatedRawValueCurrency\" IS NOT NULL");
+
+                            t.HasCheckConstraint("CK__Grade", "\"Grade\" IS NULL OR (\"Grade\" >= 10000 AND \"Grade\" <= 100000)");
+
+                            t.HasCheckConstraint("CK__PurchaseCurrency", "\"PurchaseCurrency\" IS NULL OR length(\"PurchaseCurrency\") = 3");
+
+                            t.HasCheckConstraint("CK__PurchasePrice", "\"PurchasePrice\" IS NULL OR \"PurchasePrice\" >= 0");
+
+                            t.HasCheckConstraint("CK__PurchasePrice_HasCurrency", "\"PurchasePrice\" IS NULL OR \"PurchaseCurrency\" IS NOT NULL");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Collection.StorageLocation", b =>
@@ -580,7 +658,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("ParentId", "Name")
                         .IsUnique();
 
-                    b.ToTable("StorageLocations", (string)null);
+                    b.ToTable("StorageLocations");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Market.ExchangeRate", b =>
@@ -615,7 +693,14 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("FromCurrency", "ToCurrency", "AsOf", "Source")
                         .IsUnique();
 
-                    b.ToTable("ExchangeRates", (string)null);
+                    b.ToTable("ExchangeRates", t =>
+                        {
+                            t.HasCheckConstraint("CK_ExchangeRates_Rate", "\"Rate\" > 0");
+
+                            t.HasCheckConstraint("CK__FromCurrency", "length(\"FromCurrency\") = 3");
+
+                            t.HasCheckConstraint("CK__ToCurrency", "length(\"ToCurrency\") = 3");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Market.GradingCompany", b =>
@@ -644,7 +729,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("GradingCompanies", (string)null);
+                    b.ToTable("GradingCompanies");
 
                     b.HasData(
                         new
@@ -667,6 +752,68 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                             Code = "CGC",
                             Name = "CGC Cards",
                             Website = "https://www.cgccards.com"
+                        },
+                        new
+                        {
+                            Id = new Guid("0199d6a0-0000-7000-8000-000000000004"),
+                            Code = "SGC",
+                            Name = "Sportscard Guaranty",
+                            Website = "https://www.gosgc.com"
+                        },
+                        new
+                        {
+                            Id = new Guid("0199d6a0-0000-7000-8000-000000000005"),
+                            Code = "TAG",
+                            Name = "TAG Grading",
+                            Website = "https://taggrading.com"
+                        });
+                });
+
+            modelBuilder.Entity("PokemonCardManager.Core.Market.GradingServiceTier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("FeePerCard")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("GradingCompanyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("MaxDeclaredValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("TurnaroundDays")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradingCompanyId", "Name", "EffectiveFrom")
+                        .IsUnique();
+
+                    b.ToTable("GradingServiceTiers", t =>
+                        {
+                            t.HasCheckConstraint("CK__Currency", "length(\"Currency\") = 3");
+
+                            t.HasCheckConstraint("CK__FeePerCard", "\"FeePerCard\" IS NULL OR \"FeePerCard\" >= 0");
+
+                            t.HasCheckConstraint("CK__MaxDeclaredValue", "\"MaxDeclaredValue\" IS NULL OR \"MaxDeclaredValue\" >= 0");
+
+                            t.HasCheckConstraint("CK__TurnaroundDays", "\"TurnaroundDays\" IS NULL OR \"TurnaroundDays\" >= 0");
                         });
                 });
 
@@ -710,6 +857,10 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("RawCondition")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateOnly?>("SaleDate")
                         .HasColumnType("TEXT");
 
@@ -726,11 +877,21 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("GradingCompanyId");
 
-                    b.HasIndex("CardReferenceId", "ObservedAt");
+                    b.HasIndex("ObservationType");
 
-                    b.ToTable("PriceObservations", null, t =>
+                    b.HasIndex("CardReferenceId", "GradingCompanyId", "Grade", "ObservedAt");
+
+                    b.ToTable("PriceObservations", t =>
                         {
                             t.HasCheckConstraint("CK_PriceObservations_GradedIdentity", "(\"GradingCompanyId\" IS NULL) = (\"Grade\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_PriceObservations_RawConditionOnlyWhenRaw", "\"RawCondition\" IS NULL OR \"Grade\" IS NULL");
+
+                            t.HasCheckConstraint("CK__Currency", "length(\"Currency\") = 3");
+
+                            t.HasCheckConstraint("CK__Grade", "\"Grade\" IS NULL OR (\"Grade\" >= 10000 AND \"Grade\" <= 100000)");
+
+                            t.HasCheckConstraint("CK__Price", "\"Price\" IS NULL OR \"Price\" >= 0");
                         });
                 });
 
@@ -754,7 +915,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("AppSettings", (string)null);
+                    b.ToTable("AppSettings");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.AuditEntry", b =>
@@ -789,7 +950,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("EntityType", "EntityId");
 
-                    b.ToTable("AuditEntries", (string)null);
+                    b.ToTable("AuditEntries");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.BackupRecord", b =>
@@ -809,6 +970,9 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IncludesImages")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsEncrypted")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SchemaVersion")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -823,11 +987,14 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<long>("SizeBytes")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
-                    b.ToTable("BackupRecords", (string)null);
+                    b.ToTable("BackupRecords");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.ImportJob", b =>
@@ -873,7 +1040,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StartedAt");
 
-                    b.ToTable("ImportJobs", (string)null);
+                    b.ToTable("ImportJobs");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Records.SavedFilter", b =>
@@ -900,7 +1067,7 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("SavedFilters", (string)null);
+                    b.ToTable("SavedFilters");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Submissions.GradingSubmission", b =>
@@ -941,13 +1108,22 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly?>("ReceivedByGraderOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ReturnTracking")
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("ReturnedOn")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ServiceTier")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ServiceTierId")
                         .HasColumnType("TEXT");
 
                     b.Property<long>("ShippingCost")
@@ -966,11 +1142,26 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GradingCompanyId");
+                    b.HasIndex("ServiceTierId");
 
                     b.HasIndex("Status");
 
-                    b.ToTable("GradingSubmissions", (string)null);
+                    b.HasIndex("GradingCompanyId", "ExternalReference")
+                        .IsUnique()
+                        .HasFilter("\"ExternalReference\" IS NOT NULL");
+
+                    b.ToTable("GradingSubmissions", t =>
+                        {
+                            t.HasCheckConstraint("CK__ActualTotalCost", "\"ActualTotalCost\" IS NULL OR \"ActualTotalCost\" >= 0");
+
+                            t.HasCheckConstraint("CK__Currency", "length(\"Currency\") = 3");
+
+                            t.HasCheckConstraint("CK__GradingFees", "\"GradingFees\" IS NULL OR \"GradingFees\" >= 0");
+
+                            t.HasCheckConstraint("CK__InsuranceCost", "\"InsuranceCost\" IS NULL OR \"InsuranceCost\" >= 0");
+
+                            t.HasCheckConstraint("CK__ShippingCost", "\"ShippingCost\" IS NULL OR \"ShippingCost\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Submissions.SubmissionItem", b =>
@@ -986,6 +1177,9 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<long?>("DeclaredValue")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("GradingFee")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("GradingSubmissionId")
                         .HasColumnType("TEXT");
 
@@ -996,6 +1190,12 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("PhysicalCardId")
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("PredictedGradeHigh")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("PredictedGradeLow")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid?>("PredictionAssessmentId")
                         .HasColumnType("TEXT");
 
@@ -1004,6 +1204,8 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CertificationNumber");
+
                     b.HasIndex("PhysicalCardId");
 
                     b.HasIndex("PredictionAssessmentId");
@@ -1011,7 +1213,20 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("GradingSubmissionId", "PhysicalCardId")
                         .IsUnique();
 
-                    b.ToTable("SubmissionItems", (string)null);
+                    b.ToTable("SubmissionItems", t =>
+                        {
+                            t.HasCheckConstraint("CK_SubmissionItems_PredictedRange", "\"PredictedGradeLow\" IS NULL OR \"PredictedGradeHigh\" IS NULL OR \"PredictedGradeLow\" <= \"PredictedGradeHigh\"");
+
+                            t.HasCheckConstraint("CK__DeclaredValue", "\"DeclaredValue\" IS NULL OR \"DeclaredValue\" >= 0");
+
+                            t.HasCheckConstraint("CK__GradingFee", "\"GradingFee\" IS NULL OR \"GradingFee\" >= 0");
+
+                            t.HasCheckConstraint("CK__PredictedGradeHigh", "\"PredictedGradeHigh\" IS NULL OR (\"PredictedGradeHigh\" >= 10000 AND \"PredictedGradeHigh\" <= 100000)");
+
+                            t.HasCheckConstraint("CK__PredictedGradeLow", "\"PredictedGradeLow\" IS NULL OR (\"PredictedGradeLow\" >= 10000 AND \"PredictedGradeLow\" <= 100000)");
+
+                            t.HasCheckConstraint("CK__ReturnedGrade", "\"ReturnedGrade\" IS NULL OR (\"ReturnedGrade\" >= 10000 AND \"ReturnedGrade\" <= 100000)");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Transactions.CardTransaction", b =>
@@ -1058,7 +1273,16 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Date");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions", t =>
+                        {
+                            t.HasCheckConstraint("CK__Amount", "\"Amount\" IS NULL OR \"Amount\" >= 0");
+
+                            t.HasCheckConstraint("CK__Currency", "length(\"Currency\") = 3");
+
+                            t.HasCheckConstraint("CK__Fees", "\"Fees\" IS NULL OR \"Fees\" >= 0");
+
+                            t.HasCheckConstraint("CK__ShippingCost", "\"ShippingCost\" IS NULL OR \"ShippingCost\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Transactions.TransactionLine", b =>
@@ -1073,6 +1297,11 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CardTransactionId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("PhysicalCardId")
                         .HasColumnType("TEXT");
 
@@ -1083,7 +1312,10 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("CardTransactionId", "PhysicalCardId")
                         .IsUnique();
 
-                    b.ToTable("TransactionLines", (string)null);
+                    b.ToTable("TransactionLines", t =>
+                        {
+                            t.HasCheckConstraint("CK__AllocatedAmount", "\"AllocatedAmount\" IS NULL OR \"AllocatedAmount\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Assessment.CategoryFinding", b =>
@@ -1193,12 +1425,19 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("PokemonCardManager.Core.Market.GradingCompany", "GradingCompany")
+                        .WithMany()
+                        .HasForeignKey("GradingCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PokemonCardManager.Core.Collection.StorageLocation", "StorageLocation")
                         .WithMany()
                         .HasForeignKey("StorageLocationId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CardReference");
+
+                    b.Navigation("GradingCompany");
 
                     b.Navigation("StorageLocation");
                 });
@@ -1211,6 +1450,17 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("PokemonCardManager.Core.Market.GradingServiceTier", b =>
+                {
+                    b.HasOne("PokemonCardManager.Core.Market.GradingCompany", "GradingCompany")
+                        .WithMany()
+                        .HasForeignKey("GradingCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GradingCompany");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Market.PriceObservation", b =>
@@ -1239,7 +1489,14 @@ namespace PokemonCardManager.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("PokemonCardManager.Core.Market.GradingServiceTier", "ServiceTierDetails")
+                        .WithMany()
+                        .HasForeignKey("ServiceTierId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("GradingCompany");
+
+                    b.Navigation("ServiceTierDetails");
                 });
 
             modelBuilder.Entity("PokemonCardManager.Core.Submissions.SubmissionItem", b =>
