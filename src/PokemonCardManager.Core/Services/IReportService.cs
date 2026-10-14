@@ -29,7 +29,8 @@ public sealed record SubmissionCostRow(
     Guid SubmissionId, string Title, Submissions.SubmissionStatus Status, DateOnly? SubmittedOn,
     int Cards, int Graded, Money TotalCost, Money? CostPerCard, bool CostIsFinal, decimal? AverageGrade);
 
-public enum ValueBasis { CompletedSales, Estimates }
+/// <summary>Where a card's value came from. OwnEstimate is the value typed on the card itself, used only when Market has nothing.</summary>
+public enum ValueBasis { CompletedSales, Estimates, OwnEstimate }
 
 public sealed record CardValueRow(Guid PhysicalCardId, string Card, string Tier, Money Value, ValueBasis Basis, int PriceCount, DateOnly Newest, bool IsStale);
 

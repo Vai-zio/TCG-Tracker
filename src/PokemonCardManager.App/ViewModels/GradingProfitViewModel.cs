@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using FluentValidation;
 using PokemonCardManager.Core.Common;
 using PokemonCardManager.Core.Services;
 using PokemonCardManager.Core.Valuation;
@@ -11,15 +12,98 @@ namespace PokemonCardManager.App.ViewModels;
 /// </summary>
 public sealed class GradingProfitViewModel : ViewModelBase
 {
+    private readonly IGradingFeeService _fees;
+    private FeeTierRow? _selectedFeeTier;
+    private string _tierName = "", _tierFee = "", _tierCurrency = "USD", _tierMaxValue = "";
+    private string? _feeNote;
     private string _rawLow = "", _rawBase = "", _rawHigh = "";
     private string _gradingFee = "", _shippingTo = "", _returnShipping = "", _insurance = "", _other = "";
     private string _sellingFeePercent = "", _sellingFixedFee = "", _sellingShipping = "";
     private string? _error, _summary, _expectedNote, _fillNote;
 
-    public GradingProfitViewModel()
+    public GradingProfitViewModel(IGradingFeeService fees)
     {
+        _fees = fees;
         ResetGrades();
         CalculateCommand = new RelayCommand<object>(_ => Calculate());
+        SaveTierCommand = new AsyncRelayCommand(SaveTierAsync);
+        DeleteTierCommand = new AsyncRelayCommand(DeleteTierAsync, () => SelectedFeeTier is not null);
+    }
+
+    // ---- Saved fee tiers ----
+    public ObservableCollection<FeeTierRow> FeeTiers { get; } = [];
+
+    /// <summary>Picking a saved tier fills the grading fee, converted to the calculator's currency.</summary>
+    public FeeTierRow? SelectedFeeTier
+    {
+        get => _selectedFeeTier;
+        set { if (SetProperty(ref _selectedFeeTier, value) && value is not null) ApplyTier(value); }
+    }
+
+    public string TierName { get => _tierName; set => SetProperty(ref _tierName, value); }
+    public string TierFee { get => _tierFee; set => SetProperty(ref _tierFee, value); }
+    public string TierCurrency { get => _tierCurrency; set => SetProperty(ref _tierCurrency, value); }
+    public string TierMaxValue { get => _tierMaxValue; set => SetProperty(ref _tierMaxValue, value); }
+    /// <summary>Where the filled fee came from, or why it couldn't be filled.</summary>
+    public string? FeeNote { get => _feeNote; private set => SetProperty(ref _feeNote, value); }
+    public AsyncRelayCommand SaveTierCommand { get; }
+    public AsyncRelayCommand DeleteTierCommand { get; }
+
+    /// <summary>Shows the saved tiers for one company. Called when the company changes.</summary>
+    public async Task LoadTiersAsync(string companyCode)
+    {
+        CompanyCode = companyCode;
+        var selectedId = SelectedFeeTier?.Id;
+        FeeTiers.Clear();
+        foreach (var tier in await _fees.GetCurrentTiersAsync(companyCode)) FeeTiers.Add(tier);
+        _selectedFeeTier = FeeTiers.FirstOrDefault(t => t.Id == selectedId);
+        OnPropertyChanged(nameof(SelectedFeeTier));
+    }
+
+    // async void: started from a property setter; errors reach the app's dispatcher handler and are logged.
+    private async void ApplyTier(FeeTierRow tier)
+    {
+        var quote = await _fees.QuoteAsync(tier.Id, Currency, PriceCsv.ParseDecimal(RawBase));
+        if (quote.Fee is { } fee) GradingFee = Text(fee);
+        FeeNote = string.Join(" ", quote.Warnings.Prepend(quote.Fee is null ? "" : $"Fee from saved tier {tier.CompanyCode} {tier.Name} (since {tier.EffectiveFrom:yyyy-MM-dd}).")).Trim();
+    }
+
+    private async Task SaveTierAsync()
+    {
+        FeeNote = null;
+        if (PriceCsv.ParseDecimal(TierFee) is not { } fee) { FeeNote = "Enter the fee per card, e.g. 25."; return; }
+        decimal? max = null;
+        if (!string.IsNullOrWhiteSpace(TierMaxValue))
+        {
+            if (PriceCsv.ParseDecimal(TierMaxValue) is not { } m) { FeeNote = "Max declared value must be a number, or empty for no limit."; return; }
+            max = m;
+        }
+        try
+        {
+            var id = await _fees.SaveTierAsync(new FeeTierInput(CompanyCode, TierName, fee, TierCurrency, DateOnly.FromDateTime(DateTime.Today), max));
+            await LoadTiersAsync(CompanyCode);
+            TierName = TierFee = TierMaxValue = "";
+            SelectedFeeTier = FeeTiers.FirstOrDefault(t => t.Id == id);
+        }
+        catch (ValidationException ex)
+        {
+            FeeNote = string.Join(" ", ex.Errors.Select(e => e.ErrorMessage).Distinct());
+        }
+    }
+
+    private async Task DeleteTierAsync()
+    {
+        if (SelectedFeeTier is not { } tier) return;
+        try
+        {
+            await _fees.DeleteTierAsync(tier.Id);
+            FeeNote = $"Removed {tier.CompanyCode} {tier.Name}.";
+        }
+        catch (DomainRuleViolationException ex)
+        {
+            FeeNote = ex.Message;
+        }
+        await LoadTiersAsync(CompanyCode);
     }
 
     public ObservableCollection<GradeInputViewModel> Grades { get; } = [];

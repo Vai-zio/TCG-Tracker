@@ -48,6 +48,8 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
     private DateTime? _acquiredOn;
     private string _purchasePriceText = "";
     private string _purchaseCurrency;
+    private string _estimatedValueText = "";
+    private string _estimatedCurrency;
     private string _acquisitionSource = "";
     private Option<Guid?>? _location;
     private Option<WorkflowStatus> _workflowStatus;
@@ -66,6 +68,7 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
         _dialogs = dialogs;
         _defaultCurrency = configuration["Collection:DefaultCurrency"] is { Length: 3 } c ? c.ToUpperInvariant() : "DKK";
         _purchaseCurrency = _defaultCurrency;
+        _estimatedCurrency = _defaultCurrency;
 
         _finish = Finishes[0];
         _category = Categories[0];
@@ -119,6 +122,8 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
     public DateTime? AcquiredOn { get => _acquiredOn; set => SetField(ref _acquiredOn, value); }
     public string PurchasePriceText { get => _purchasePriceText; set => SetField(ref _purchasePriceText, value); }
     public string PurchaseCurrency { get => _purchaseCurrency; set => SetField(ref _purchaseCurrency, value); }
+    public string EstimatedValueText { get => _estimatedValueText; set => SetField(ref _estimatedValueText, value); }
+    public string EstimatedCurrency { get => _estimatedCurrency; set => SetField(ref _estimatedCurrency, value); }
     public string AcquisitionSource { get => _acquisitionSource; set => SetField(ref _acquisitionSource, value); }
     public Option<Guid?>? Location { get => _location; set => SetField(ref _location, value); }
     public Option<WorkflowStatus> WorkflowStatus { get => _workflowStatus; set => SetField(ref _workflowStatus, value); }
@@ -182,6 +187,8 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
         _acquiredOn = c.AcquiredOn?.ToDateTime(TimeOnly.MinValue);
         _purchasePriceText = c.PurchasePrice?.ToString("0.00", CultureInfo.CurrentCulture) ?? "";
         _purchaseCurrency = c.PurchaseCurrency ?? _defaultCurrency;
+        _estimatedValueText = c.EstimatedValue?.ToString("0.00", CultureInfo.CurrentCulture) ?? "";
+        _estimatedCurrency = c.EstimatedValueCurrency ?? _defaultCurrency;
         _acquisitionSource = c.AcquisitionSource ?? "";
         _location = Locations.FirstOrDefault(o => o.Value == c.StorageLocationId) ?? Locations[0];
         _workflowStatus = Statuses.First(o => o.Value == c.Status);
@@ -217,17 +224,9 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
     private bool TryBuildInput(out PhysicalCardInput input)
     {
         input = null!;
-        decimal? price = null;
-        if (!string.IsNullOrWhiteSpace(PurchasePriceText))
-        {
-            if (!decimal.TryParse(PurchasePriceText, NumberStyles.Number, CultureInfo.CurrentCulture, out var p) &&
-                !decimal.TryParse(PurchasePriceText, NumberStyles.Number, CultureInfo.InvariantCulture, out p))
-            {
-                Error = "Purchase price must be a number, e.g. 125.50.";
-                return false;
-            }
-            price = p;
-        }
+        if (!TryParseAmount(PurchasePriceText, "Purchase price", out var price) ||
+            !TryParseAmount(EstimatedValueText, "Estimated value", out var estimate))
+            return false;
 
         int? year = null;
         if (!string.IsNullOrWhiteSpace(ReleaseYearText))
@@ -256,12 +255,29 @@ public sealed class CardEditorViewModel : ViewModelBase, INavigationAware, IHasU
             AcquiredOn = AcquiredOn is { } d ? DateOnly.FromDateTime(d) : null,
             PurchasePrice = price,
             PurchaseCurrency = price is null ? null : PurchaseCurrency, // a currency alone means nothing
+            EstimatedValue = estimate,
+            EstimatedValueCurrency = estimate is null ? null : EstimatedCurrency,
             AcquisitionSource = AcquisitionSource,
             StorageLocationId = Location?.Value,
             Status = WorkflowStatus.Value,
             RawCondition = RawCondition.Value,
             Notes = Notes,
         };
+        return true;
+    }
+
+    /// <summary>Empty text is "no amount". Accepts both 125,50 and 125.50.</summary>
+    private bool TryParseAmount(string text, string label, out decimal? amount)
+    {
+        amount = null;
+        if (string.IsNullOrWhiteSpace(text)) return true;
+        if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out var a) &&
+            !decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out a))
+        {
+            Error = $"{label} must be a number, e.g. 125.50.";
+            return false;
+        }
+        amount = a;
         return true;
     }
 

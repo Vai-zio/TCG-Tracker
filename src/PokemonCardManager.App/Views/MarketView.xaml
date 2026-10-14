@@ -216,6 +216,23 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
+                                <TextBlock Text="Saved fee tiers" Style="{StaticResource MutedTextStyle}" Margin="0,8,0,4" />
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <ComboBox Width="320" ItemsSource="{Binding FeeTiers}" SelectedItem="{Binding SelectedFeeTier}" DisplayMemberPath="Display"
+                                              AutomationProperties.Name="Saved fee tier" ToolTip="Pick a saved tier to fill the grading fee" Margin="0,0,8,0" />
+                                    <Button Content="Remove tier" Command="{Binding DeleteTierCommand}" />
+                                </StackPanel>
+                                <WrapPanel Margin="0,0,0,4">
+                                    <StackPanel Margin="0,0,10,4"><Label Content="New tier name" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="110" Text="{Binding TierName, UpdateSourceTrigger=PropertyChanged}" ToolTip="e.g. Value, Regular, Express" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,4"><Label Content="Fee per card" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="80" Text="{Binding TierFee, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,4"><Label Content="Currency" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="56" Text="{Binding TierCurrency, UpdateSourceTrigger=PropertyChanged}" CharacterCasing="Upper" MaxLength="3" /></StackPanel>
+                                    <StackPanel Margin="0,0,10,4"><Label Content="Max card value" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding TierMaxValue, UpdateSourceTrigger=PropertyChanged}" ToolTip="Highest declared value the tier accepts. Empty = no limit." /></StackPanel>
+                                    <Button Content="Save tier" Command="{Binding SaveTierCommand}" VerticalAlignment="Bottom" Margin="0,0,0,4"
+                                            ToolTip="Saves the fee as of today. A new price for an existing tier keeps the old one as history." />
+                                </WrapPanel>
+                                <TextBlock Text="{Binding FeeNote}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,0,0,4"
+                                           Visibility="{Binding FeeNote, Converter={StaticResource NotEmptyToVisibility}}" />
+
                                 <WrapPanel Margin="0,8,0,0">
                                     <StackPanel Margin="0,0,10,8"><Label Content="Grading fee *" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding GradingFee, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
                                     <StackPanel Margin="0,0,10,8"><Label Content="Shipping there" Style="{StaticResource FieldLabelStyle}" /><TextBox Width="90" Text="{Binding ShippingTo, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>

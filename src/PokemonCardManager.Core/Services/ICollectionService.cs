@@ -113,6 +113,9 @@ public record PhysicalCardInput
     public DateOnly? AcquiredOn { get; init; }
     public decimal? PurchasePrice { get; init; }
     public string? PurchaseCurrency { get; init; }
+    /// <summary>Your own guess of what this copy is worth raw. Used for the collection value when Market has no price.</summary>
+    public decimal? EstimatedValue { get; init; }
+    public string? EstimatedValueCurrency { get; init; }
     public string? AcquisitionSource { get; init; }
     public Guid? StorageLocationId { get; init; }
     public WorkflowStatus Status { get; init; } = WorkflowStatus.Cataloged;

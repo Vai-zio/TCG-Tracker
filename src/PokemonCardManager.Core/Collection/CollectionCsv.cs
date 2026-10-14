@@ -25,7 +25,7 @@ public static class CollectionCsv
     public static readonly string[] RequiredColumns = ["Set", "Number", "Name"];
     public static readonly string[] OptionalColumns =
         ["Id", "Language", "Finish", "Edition", "Rarity", "Condition", "Status", "Location", "Acquired",
-         "PurchasePrice", "PurchaseCurrency", "AcquiredFrom", "Notes", "Quantity"];
+         "PurchasePrice", "PurchaseCurrency", "AcquiredFrom", "Notes", "Quantity", "EstimatedValue", "EstimatedCurrency"];
     public const string Template = "Set,Number,Name,Language,Finish,Edition,Rarity,Condition,Status,Location,Acquired,PurchasePrice,PurchaseCurrency,AcquiredFrom,Notes,Quantity";
     public const int MaxQuantity = 100;
 
@@ -67,6 +67,12 @@ public static class CollectionCsv
         var currency = get("PurchaseCurrency");
         if (currency is not null && CurrencyCode.IsValid(currency)) currency = CurrencyCode.Normalize(currency);
 
+        decimal? estimate = null;
+        if (get("EstimatedValue") is { } estimateText && (estimate = PriceCsv.ParseDecimal(estimateText)) is null)
+            errors.Add($"EstimatedValue '{estimateText}' is not a number.");
+        var estimateCurrency = get("EstimatedCurrency");
+        if (estimateCurrency is not null && CurrencyCode.IsValid(estimateCurrency)) estimateCurrency = CurrencyCode.Normalize(estimateCurrency);
+
         var quantity = 1;
         if (get("Quantity") is { } quantityText && (!int.TryParse(quantityText, out quantity) || quantity is < 1 or > MaxQuantity))
         {
@@ -92,6 +98,8 @@ public static class CollectionCsv
             AcquiredOn = acquired,
             PurchasePrice = price,
             PurchaseCurrency = currency,
+            EstimatedValue = estimate,
+            EstimatedValueCurrency = estimateCurrency,
             AcquisitionSource = get("AcquiredFrom"),
             Notes = get("Notes"),
         };

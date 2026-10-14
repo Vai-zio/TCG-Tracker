@@ -32,6 +32,15 @@ public class PhysicalCardInputValidator : AbstractValidator<PhysicalCardInput>
             .Must(CurrencyCode.IsValid).WithMessage("Enter a three-letter currency code, e.g. DKK.")
             .When(c => c.PurchasePrice is not null || !string.IsNullOrEmpty(c.PurchaseCurrency));
 
+        RuleFor(c => c.EstimatedValue)
+            .GreaterThanOrEqualTo(0m)
+            .PrecisionScale(14, 2, ignoreTrailingZeros: true)
+            .When(c => c.EstimatedValue is not null);
+
+        RuleFor(c => c.EstimatedValueCurrency)
+            .Must(CurrencyCode.IsValid).WithMessage("Enter a three-letter currency code for the estimated value, e.g. DKK.")
+            .When(c => c.EstimatedValue is not null || !string.IsNullOrEmpty(c.EstimatedValueCurrency));
+
         RuleFor(c => c.AcquisitionSource).MaximumLength(200);
         RuleFor(c => c.Notes).MaximumLength(4000);
     }

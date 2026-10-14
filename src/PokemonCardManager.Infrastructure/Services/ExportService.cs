@@ -19,12 +19,13 @@ public sealed class ExportService(IDbContextFactory<PokemonCardDbContext> contex
                 c.Id, c.CardReference.CardSet.Name, c.CardReference.CollectorNumber, c.CardReference.Name, c.CardReference.Language,
                 c.CardReference.Finish, c.CardReference.Edition, c.CardReference.Rarity, c.RawCondition, c.Status,
                 c.StorageLocation != null ? c.StorageLocation.Name : null, c.AcquiredOn, c.PurchasePrice, c.PurchaseCurrency,
-                c.AcquisitionSource, c.Notes,
+                c.AcquisitionSource, c.Notes, c.EstimatedRawValue, c.EstimatedRawValueCurrency,
             })
             .ToListAsync(cancellationToken);
         return CsvWriter.Write(
             ["Id", "Set", "Number", "Name", "Language", "Finish", "Edition", "Rarity", "Condition", "Status",
-             "Location", "Acquired", "PurchasePrice", "PurchaseCurrency", "AcquiredFrom", "Notes"],
+             "Location", "Acquired", "PurchasePrice", "PurchaseCurrency", "AcquiredFrom", "Notes",
+             "EstimatedValue", "EstimatedCurrency"],
             rows);
     }
 
