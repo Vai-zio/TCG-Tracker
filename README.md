@@ -274,9 +274,19 @@ shows each card as a tile. The dashboard's value tile shows "—" until market p
   reason. The lines are a suggestion: you check them and press "Use this measurement", and the saved record says
   the guides were placed automatically.
 
+**Milestone 11 (collection browser): in progress.**
+- **Filter and sort by value**: a min–max range on each card's own estimated value, in one currency. Amounts are
+  stored as whole numbers (value × 10,000), so the range is compared exactly in SQL and stays fast at 20,000 cards.
+  Market prices aren't used here, because they live in a separate history table with several prices per card.
+- **Saved filters** (`ISavedFilterService`, the existing `SavedFilters` table): the search, filters and sort are
+  stored as JSON, with enums written by name so a reordered enum can't change an old filter. The page isn't saved.
+  A set or location that was deleted since falls back to "any", with a note.
+- **Bulk edit** (`ICollectionService.BulkUpdateAsync`): select several rows (Ctrl/Shift+click) and set location,
+  status and/or condition in one transaction, up to 1,000 cards. Cards are loaded and changed one by one rather than
+  with a raw UPDATE, so each change gets its audit entry like a normal edit. Sold, traded, submitted and graded
+  can't be set in bulk (`BulkEditRules`), and cards that already have them keep their status.
+
 Known limitations:
-- Not yet built from the spec's collection browser list: multi-select bulk editing, saved filters
-  (the table exists) and filtering by value.
 - Thumbnails are decoded on demand, not cached on disk yet.
 - Search uses `LIKE`, which is fine for 20,000 cards; SQLite full-text search may come later.
 - No sample dataset ships with the app (the 20,000-card test data is generated inside the tests only).

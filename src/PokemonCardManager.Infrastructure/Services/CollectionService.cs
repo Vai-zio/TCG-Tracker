@@ -23,6 +23,7 @@ public sealed class CollectionService(
 {
     public async Task<PagedResult<PhysicalCardRow>> SearchAsync(CollectionQuery query, CancellationToken cancellationToken = default)
     {
+        query = NormalizeValueRange(query);
         var page = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize, 1, 1000);
 
@@ -52,6 +53,8 @@ public sealed class CollectionService(
                 c.AcquiredOn,
                 c.PurchasePrice,
                 c.PurchaseCurrency,
+                c.EstimatedRawValue,
+                c.EstimatedRawValueCurrency,
                 c.Images
                     .Where(i => i.Kind == ImageKind.Front && i.OriginalImageId == null)
                     .OrderBy(i => i.ImportedAt)
@@ -87,7 +90,30 @@ public sealed class CollectionService(
             var ids = locations.SelfAndDescendants(locationId);
             cards = cards.Where(c => c.StorageLocationId != null && ids.Contains(c.StorageLocationId.Value));
         }
+        if (query.MinValue is not null || query.MaxValue is not null)
+        {
+            // Amounts are stored as whole numbers (value × 10,000), so >= and <= compare exactly in SQL.
+            cards = cards.Where(c => c.EstimatedRawValue != null && c.EstimatedRawValueCurrency == query.ValueCurrency);
+            if (query.MinValue is { } min) cards = cards.Where(c => c.EstimatedRawValue >= min);
+            if (query.MaxValue is { } max) cards = cards.Where(c => c.EstimatedRawValue <= max);
+        }
         return cards;
+    }
+
+    /// <summary>A value range needs a currency: 100 DKK and 100 USD aren't the same amount.</summary>
+    private static CollectionQuery NormalizeValueRange(CollectionQuery query)
+    {
+        if (query.MinValue is null && query.MaxValue is null) return query;
+        if (!CurrencyCode.IsValid(query.ValueCurrency))
+            throw new ValidationException([new ValidationFailure(nameof(CollectionQuery.ValueCurrency),
+                "A value range needs a three-letter currency code, e.g. DKK.")]);
+        return query with
+        {
+            ValueCurrency = CurrencyCode.Normalize(query.ValueCurrency),
+            // Stored amounts have 4 decimals; round the bounds the same way so they can be compared.
+            MinValue = query.MinValue is { } min ? Math.Round(min, 4) : null,
+            MaxValue = query.MaxValue is { } max ? Math.Round(max, 4) : null,
+        };
     }
 
     private static IQueryable<PhysicalCard> Sort(IQueryable<PhysicalCard> cards, CollectionSort sort, bool descending)
@@ -99,6 +125,7 @@ public sealed class CollectionService(
             CollectionSort.AcquiredOn => By(cards, c => c.AcquiredOn, descending),
             CollectionSort.PurchasePrice => By(cards, c => c.PurchasePrice, descending),
             CollectionSort.AddedAt => By(cards, c => c.CreatedAt, descending),
+            CollectionSort.EstimatedValue => By(cards, c => c.EstimatedRawValue, descending),
             // Set, then number "naturally": shorter numbers first, so 2 comes before 10.
             _ => descending
                 ? cards.OrderByDescending(c => c.CardReference.CardSet.Name)
@@ -252,6 +279,47 @@ public sealed class CollectionService(
         var physical = await db.PhysicalCards.CountAsync(cancellationToken);
         var distinct = await db.PhysicalCards.Select(c => c.CardReferenceId).Distinct().CountAsync(cancellationToken);
         return new CollectionStatistics(physical, distinct);
+    }
+
+    public async Task<BulkUpdateResult> BulkUpdateAsync(IReadOnlyCollection<Guid> physicalCardIds, BulkCardChange change,
+        CancellationToken cancellationToken = default)
+    {
+        if (change.IsEmpty)
+            throw new ValidationException([new ValidationFailure(nameof(BulkCardChange), "Choose at least one thing to change.")]);
+        if (change.Status is { } target && !BulkEditRules.IsManual(target))
+            throw new ValidationException([new ValidationFailure(nameof(BulkCardChange.Status),
+                "Sold, traded, submitted and graded are set from the Sales and Submissions screens, not by bulk edit.")]);
+        var ids = physicalCardIds.Distinct().ToList();
+        if (ids.Count == 0) return new BulkUpdateResult(0, 0);
+        if (ids.Count > BulkEditRules.MaxCards)
+            throw new ValidationException([new ValidationFailure(nameof(physicalCardIds),
+                $"Bulk edit works on up to {BulkEditRules.MaxCards:N0} cards at a time.")]);
+
+        await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
+        if (change.ChangeLocation) await EnsureLocationExistsAsync(db, change.StorageLocationId, cancellationToken);
+
+        // Load the cards as tracked entities (not a raw UPDATE), so the save goes through the same
+        // interceptor as single edits: timestamps and the audit log are written for every card.
+        var cards = await db.PhysicalCards.Where(c => ids.Contains(c.Id)).ToListAsync(cancellationToken);
+        if (cards.Count != ids.Count)
+            throw new KeyNotFoundException("Some of the selected cards no longer exist. Refresh the list and try again.");
+
+        var statusKept = 0;
+        foreach (var card in cards)
+        {
+            if (change.ChangeLocation) card.StorageLocationId = change.StorageLocationId;
+            if (change.RawCondition is { } condition) card.RawCondition = condition;
+            if (change.Status is { } status)
+            {
+                if (BulkEditRules.IsManual(card.Status)) card.Status = status;
+                else statusKept++;
+            }
+        }
+
+        // One SaveChanges = one transaction: every card changes, or none do.
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Bulk-updated {CardCount} physical cards ({StatusKept} kept their status)", cards.Count, statusKept);
+        return new BulkUpdateResult(cards.Count, statusKept);
     }
 
     private async Task<PhysicalCardInput> ValidateAndNormalizeAsync(PhysicalCardInput input, CancellationToken cancellationToken)
