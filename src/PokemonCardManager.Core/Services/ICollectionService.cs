@@ -34,9 +34,17 @@ public interface ICollectionService
     Task DeletePhysicalCardAsync(Guid physicalCardId, CancellationToken cancellationToken = default);
 
     Task<CollectionStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Applies the same change to many cards in one transaction: all of them change, or none do.
+    /// Cards whose status comes from another workflow (sold, traded, submitted, graded) keep their
+    /// status; the result says how many. Throws FluentValidation.ValidationException on a bad change.
+    /// </summary>
+    Task<BulkUpdateResult> BulkUpdateAsync(IReadOnlyCollection<Guid> physicalCardIds, BulkCardChange change,
+        CancellationToken cancellationToken = default);
 }
 
-public enum CollectionSort { SetAndNumber, Name, AcquiredOn, PurchasePrice, AddedAt }
+public enum CollectionSort { SetAndNumber, Name, AcquiredOn, PurchasePrice, AddedAt, EstimatedValue }
 
 /// <summary>Search and filter settings. Null filters are ignored. Pages start at 1.</summary>
 public record CollectionQuery
@@ -51,6 +59,13 @@ public record CollectionQuery
     public RawCondition? RawCondition { get; init; }
     /// <summary>Cards in this location or any location inside it.</summary>
     public Guid? StorageLocationId { get; init; }
+    /// <summary>
+    /// Value range on the card's own estimated value, both ends included. Only cards estimated in
+    /// <see cref="ValueCurrency"/> match: amounts in different currencies can't be compared.
+    /// </summary>
+    public decimal? MinValue { get; init; }
+    public decimal? MaxValue { get; init; }
+    public string? ValueCurrency { get; init; }
     public CollectionSort Sort { get; init; } = CollectionSort.SetAndNumber;
     public bool Descending { get; init; }
     public int Page { get; init; } = 1;
@@ -79,6 +94,8 @@ public record PhysicalCardRow(
     DateOnly? AcquiredOn,
     decimal? PurchasePrice,
     string? PurchaseCurrency,
+    decimal? EstimatedValue,
+    string? EstimatedValueCurrency,
     /// <summary>Storage key of the first original front photo, for a thumbnail. Null if none.</summary>
     string? FrontImageKey,
     DateTime CreatedAt);
@@ -124,3 +141,22 @@ public record PhysicalCardInput
 }
 
 public record CollectionStatistics(int PhysicalCards, int DistinctCardReferences);
+
+/// <summary>
+/// One change for many cards. Each part is optional: only the parts that are set are applied.
+/// </summary>
+public record BulkCardChange
+{
+    /// <summary>True to change the location; then a null <see cref="StorageLocationId"/> means "not placed".</summary>
+    public bool ChangeLocation { get; init; }
+    public Guid? StorageLocationId { get; init; }
+    public WorkflowStatus? Status { get; init; }
+    public RawCondition? RawCondition { get; init; }
+
+    public bool IsEmpty => !ChangeLocation && Status is null && RawCondition is null;
+}
+
+/// <param name="Updated">Cards that were changed.</param>
+/// <param name="StatusKept">Cards that kept their status because another workflow owns it.</param>
+public record BulkUpdateResult(int Updated, int StatusKept);
+

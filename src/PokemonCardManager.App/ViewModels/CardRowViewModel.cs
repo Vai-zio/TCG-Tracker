@@ -28,6 +28,8 @@ public sealed class CardRowViewModel(PhysicalCardRow row, string? thumbnailPath)
     public string Condition => EnumToTextConverter.Humanize(Row.RawCondition.ToString());
     public string Location => Row.StorageLocationPath ?? "";
     public string Price => Row.PurchasePrice is { } p ? $"{p:N2} {Row.PurchaseCurrency}" : "";
+    /// <summary>Your own estimate from the card editor (Market prices aren't shown in the list).</summary>
+    public string Value => Row.EstimatedValue is { } v ? $"{v:N2} {Row.EstimatedValueCurrency}" : "";
     public DateOnly? AcquiredOn => Row.AcquiredOn;
     public DateTime AddedLocal => Row.CreatedAt.ToLocalTime();
 

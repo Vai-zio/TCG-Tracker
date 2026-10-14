@@ -4,7 +4,10 @@ using PokemonCardManager.App.ViewModels;
 
 namespace PokemonCardManager.App.Views;
 
-/// <summary>Only view-specific glue lives here: double-click or Enter opens the selected card.</summary>
+/// <summary>
+/// Only view-specific glue lives here: double-click or Enter opens the selected card, and the
+/// selected rows are handed to the view model (WPF can't bind a multi-selection directly).
+/// </summary>
 public partial class CollectionView : UserControl
 {
     public CollectionView()
@@ -14,6 +17,18 @@ public partial class CollectionView : UserControl
     }
 
     private CollectionViewModel? ViewModel => DataContext as CollectionViewModel;
+
+    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModel is null) return;
+        var selected = sender switch
+        {
+            DataGrid grid => grid.SelectedItems,
+            ListBox list => list.SelectedItems,
+            _ => null,
+        };
+        ViewModel.SelectedRows = selected?.OfType<CardRowViewModel>().ToList() ?? [];
+    }
 
     private void OnRowDoubleClick(object sender, MouseButtonEventArgs e)
     {
