@@ -63,7 +63,8 @@ public sealed record DefectInput
 /// <summary>A rectangle in fractions of the image: (0,0) top-left, (1,1) bottom-right.</summary>
 public sealed record NormalizedBox(double X, double Y, double Width, double Height);
 
-public sealed record CenteringInput(CardSide Side, Guid ImageId, CenteringGuides Guides);
+/// <param name="AutoPlaced">True when the guides came from automatic detection and were accepted unchanged.</param>
+public sealed record CenteringInput(CardSide Side, Guid ImageId, CenteringGuides Guides, bool AutoPlaced = false);
 
 public sealed record InspectionSummary(
     Guid Id,
